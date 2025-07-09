@@ -34,6 +34,8 @@ suppressPackageStartupMessages({
   library(ggplot2)
   library(dplyr)
   library(tidyr)
+  library(purrr)
+  library(forcats)
   library(targets)
   library(gt)
   library(cowplot)
@@ -141,49 +143,39 @@ Sequencing was carried out by Edinburgh Genetics. 2x100 bp paired-end stranded r
 
 ## Ribosomal RNA removal
 
-A tool [RiboDetector](https://github.com/hzi-bifo/RiboDetector) was used
-to remove reads matching ribosomal RNA from FASTQ files. RiboDetector is
-a machine learning tool that can recognize ribosomal RNA. @fig-ribo
-show no substantial ribosomal contamination.
+A tool [RiboDetector](https://github.com/hzi-bifo/RiboDetector) was used to remove reads matching ribosomal RNA from FASTQ files. RiboDetector is a machine learning tool that can recognize ribosomal RNA. @fig-ribo show no substantial ribosomal contamination in all samples except `mut_5`, where ~60% of reads are ribosomal.
 
 ```{r}
 #| label: fig-ribo
 #| fig-cap: Proportion of ribosomal reads detected in each sample.
 #| fig-width: 5
 #| fig-height: 5
-#tar_read(fig_ribo_prop)
+tar_read(fig_ribo_prop)
 ```
 
 ## FastQ screen
 
-[FastQ
-screen](https://www.bioinformatics.babraham.ac.uk/projects/fastq_screen/)
-was used to map a sample of reads to several genomes to check for
-contamination. @fig-fscreen shows one hit one genome percentage. Note,
-the fill scale is logarithmic with grey indicating zero. There is no notable contamination from other organisms.
+[FastQ screen](https://www.bioinformatics.babraham.ac.uk/projects/fastq_screen/) was used to map a sample of reads to several genomes to check for contamination. @fig-fscreen shows one hit one genome percentage. Note, the fill scale is logarithmic with grey indicating zero. There is no notable contamination from other organisms. `mut_5` has only about 35% of unique hits to *B. subtilis* genome, the low number being the result of ribosomal contamination. 
 
 
 ```{r}
 #| label: fig-fscreen
-#| fig-cap: Fscreen results, one hit per one genome and multiple hits per one genome are inluded.
+#| fig-cap: FastQ screen results. The figure shows one hit per one genome percentages, using trimmed reads, but with ribosomal sequences not removed.
 #| fig-width: 4.5
 #| fig-height: 4
-#tar_read(fig_fscreen)
+tar_read(fig_fscreen) 
 ```
 
 ## Read quality
 
-@fig-read-qual shows read quality as a function of base pair position,
-@fig-read-qual-clust shows hierarchical clustering based on read
-quality. This has nothing to do with biology, but rather shows potential
-batch effects related to sequencing or sample quality. We see that the sample `ctrl_5` stands out a bit.
+@fig-read-qual shows read quality as a function of base pair position, @fig-read-qual-clust shows hierarchical clustering based on read quality. This has nothing to do with biology, but rather shows potential batch effects related to sequencing or sample quality. We see that the sample `ctrl_5` stands out a bit.
 
 ```{r}
 #| label: fig-read-qual
 #| fig-cap: Read quality.
 #| fig-width: 8
 #| fig-height: 3
-#tar_read(fig_read_qual)
+tar_read(fig_read_qual)
 ```
 
 ```{r}
@@ -191,7 +183,7 @@ batch effects related to sequencing or sample quality. We see that the sample `c
 #| fig-cap: Clustering based on read quality.
 #| fig-width: 4
 #| fig-height: 3
-#tar_read(fig_read_qual_clust)
+tar_read(fig_read_qual_clust)
 ```
 
 
@@ -207,10 +199,15 @@ Bacillus subtilis NCIB 3610 [genome assembly ASM205596v1](https://www.ncbi.nlm.n
 ```         
 --outFilterType BySJout 
 --outSAMtype BAM SortedByCoordinate
+--sjdbGTFfeatureExon gene
 --outFilterMultimapNmax 2
+--alignIntronMax 1
+--limitBAMsortRAM 3000000000
 --readFilesCommand zcat
 --quantMode GeneCounts
 ```
+
+The `--alignIntronMax 1` option prohibits splicing (STAR is a splice-aware aligner). The `--sjdbGTFfeatureExon gene` option is included both in the index build and mapping, because the GFT file does not have exons and `gene` is the main feature.
 
 ## Mapping properties
 
@@ -221,7 +218,7 @@ Bacillus subtilis NCIB 3610 [genome assembly ASM205596v1](https://www.ncbi.nlm.n
 #| fig-cap: STAR mapping properties. 
 #| fig-width: 6
 #| fig-height: 10
-#tar_read(fig_star_log) 
+tar_read(fig_star_log) 
 ```
 
 ```{r}
@@ -229,7 +226,7 @@ Bacillus subtilis NCIB 3610 [genome assembly ASM205596v1](https://www.ncbi.nlm.n
 #| fig-cap: Input counts vs mapped and counted reads. Samples are ordered from the lowest to the highest percentage of uniquely mapped reads.
 #| fig-width: 8
 #| fig-height: 4
-#tar_read(fig_map_count)
+tar_read(fig_map_count)
 ```
 
 ## Strandedness
@@ -252,7 +249,7 @@ We recommend instructing the sequencing centre to use a stranded protocol when s
 #| fig-cap: Distribution of log read count per STAR output file column. The second strand reads are dominant, so we read column 4.
 #| fig-width: 5
 #| fig-height: 3
-#tar_read(fig_star_sense)
+tar_read(fig_star_sense)
 ```
 
 ## Full QC report
@@ -266,7 +263,7 @@ The full quality control report, collated by MultiQC, is available [here](https:
 ```{r}
 #| label: fig-sample-dist
 #| fig-cap: Distribution of regularised log-count per sample.
-#knitr::include_graphics("../fig/sample_quasirandom.png") 
+knitr::include_graphics("../fig/sample_quasirandom.png") 
 ```
 
 Next figures are based on [regularised logarithm](https://rdrr.io/bioc/DESeq2/man/rlog.html) (rlog) of raw count data. @fig-properties shows Pearson's correlation coefficient between each pair of samples, PCA results and hierarchical clustering.
@@ -276,10 +273,10 @@ Next figures are based on [regularised logarithm](https://rdrr.io/bioc/DESeq2/ma
 #| fig-cap: A. Correlation matrix. B. PCA of rlog-transformed counts. C. Hierarchical clustering of samples based on rlog-transformed counts and correlation distance.
 #| fig-width: 8
 #| fig-height: 6
-#g1 <- tar_read(fig_distance_mat)
-#g2 <- tar_read(fig_pca)
-#g3 <- tar_read(fig_clustering) 
-#cowplot::plot_grid(g1, g2, g3, nrow = 2, labels = c("A", "B", "C"))
+g1 <- tar_read(fig_distance_mat)
+g2 <- tar_read(fig_pca)
+g3 <- tar_read(fig_clustering) 
+cowplot::plot_grid(g1, g2, g3, nrow = 2, labels = c("A", "B", "C"))
 ```
 
 

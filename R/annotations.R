@@ -1,6 +1,6 @@
 
-get_gene_annotations_from_gff <- function(gff) {
-  coords <- gff |> 
+get_gene_annotations_from_gtf <- function(gtf) {
+  coords <- gtf |> 
     as_tibble() |> 
     select(
       chr = seqnames,
@@ -8,24 +8,34 @@ get_gene_annotations_from_gff <- function(gff) {
       end,
       strand
     )
-  mc <- mcols(gff) |> 
+  mc <- mcols(gtf) |> 
     as_tibble()
 
- bind_cols(coords, mc) |> 
-  filter(type == "CDS")  |> 
+ # We use "gene" selection in STAR alignment, so need to follow here
+ genes <- bind_cols(coords, mc) |> 
+  filter(type == "gene")  |> 
   select(
     chr,
     start,
     end,
     strand,
-    id = Name,
-    gene_symbol = gene,
+    id = gene_id,
+    gene_symbol = gene
+  )
+
+  # only rows marked as CDS contain gene desscription
+  CDS <-  bind_cols(coords, mc) |> 
+  filter(type == "CDS")  |> 
+  select(
+    id = gene_id,
     description = product
   )
+
+  left_join(genes, CDS)
 }
 
-get_go_mapping_from_gff <- function(gff) {
-  mapping <- mcols(gff) |> 
+get_go_mapping_from_gtf <- function(gtf) {
+  mapping <- mcols(gtf) |> 
     as_tibble() |> 
     filter(type == "CDS") |> 
     select(
@@ -44,9 +54,9 @@ get_go_mapping_from_gff <- function(gff) {
 }
 
 
-get_functional_terms <- function(gff, kg_spec) {
+get_functional_terms <- function(gtf, kg_spec) {
   cat("Loading GO term data\n")
-  go <- get_go_mapping_from_gff(gff)
+  go <- get_go_mapping_from_gtf(gtf)
   cat("Loading KEGG data\n")
   kg <- fenr::fetch_kegg(species = kg_spec)
   terms = list(

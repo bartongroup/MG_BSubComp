@@ -6,7 +6,7 @@
 #
 # mamba create --name bsub_comp
 # mamba activate bsub_comp
-# mamba install snakemake=7.32.4 fastqc multiqc samtools bedtools star fastp fastq-screen drmaa qualimap ribodetector
+# mamba install snakemake=7.32.4 fastqc multiqc samtools bedtools star fastp fastq-screen drmaa qualimap ribodetector deeptools
 #
 ### To recreate the environment
 #
@@ -72,7 +72,7 @@ BEDGRAPHS = expand('bedgraph/{sample}.' + window_size + '.bedgraph', sample = SA
 ####################################################################
 
 rule all:
-    input: ENVIRONMENT + QCS + QMS + CHRSTATS + MULTIQC + COUNTS + BEDGRAPHS + TRIM_COUNTS + CLEAN_COUNTS
+    input: ENVIRONMENT + QCS + FSCREENS + CHRSTATS + MULTIQC + COUNTS + BEDGRAPHS + TRIM_COUNTS + CLEAN_COUNTS
 
 ####################################################################
 # Save environment
@@ -166,12 +166,11 @@ rule multiqc:
     input:
         fscreen = FSCREENS,
         qc = QCS,
-        qm = QMS,
         star = expand('starmap/{sample}_Log.final.out', sample = SAMPLES),
         trimmed = expand('fastq_trimmed/{sample}_report.html', sample = SAMPLES)
     output: 'multiqc/report.html'
     shell:
-        'multiqc -f --filename report --outdir multiqc fastq_trimmed qc fscreen starmap qm/bamqc qm/rnaseq'
+        'multiqc -f --filename report --outdir multiqc fastq_trimmed qc fscreen starmap'
 
 ####################################################################
 # Count reads
@@ -233,9 +232,10 @@ rule star_index:
         --runMode genomeGenerate \
         --genomeFastaFiles {input.genome} \
         --sjdbGTFfile {input.gtf} \
+        --sjdbGTFfeatureExon gene \
         --outTmpDir $TMPDIR/star_index \
         --genomeDir {star_index_dir} \
-        --genomeSAindexNbases 12 \
+        --genomeSAindexNbases 10 \
         --runThreadN {threads}
         '''
 
@@ -258,12 +258,15 @@ rule star_mapping:
          STAR \
          --genomeDir {star_index_dir} \
          --sjdbGTFfile {input.gtf} \
+         --sjdbGTFfeatureExon gene \
          --readFilesIn {input.R1} {input.R2} \
          --outTmpDir $TMPDIR/starmap_tmp \
          --outFileNamePrefix $TMPDIR/starmap/{wildcards.sample}_ \
          --outFilterType BySJout \
          --outSAMtype BAM SortedByCoordinate \
          --outFilterMultimapNmax 2 \
+         --alignIntronMax 1 \
+         --limitBAMsortRAM 3000000000 \
          --readFilesCommand zcat \
          --quantMode GeneCounts \
          --runThreadN {threads}

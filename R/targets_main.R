@@ -10,9 +10,9 @@ targets_main <- function() {
   )
 
   get_annotations = tar_plan(
-    gff = rtracklayer::import(yaml$gff_url),
-    genes = get_gene_annotations_from_gff(gff),
-    terms = get_functional_terms(gff, kg_spec = "bsu"),
+    gtf = rtracklayer::import(yaml$gtf_url),
+    genes = get_gene_annotations_from_gtf(gtf),
+    terms = get_functional_terms(gtf, kg_spec = "bsu"),
     fterms = prepare_terms_fenr(terms, genes$gene_symbol)
   )
 
@@ -28,7 +28,7 @@ targets_main <- function() {
     fig_read_qual = plot_qualities(qcs),
     fig_read_qual_clust = plot_cluster_qualities(qcs),
     
-    png_sample_dist = plot_sample_quasirandom(star) |> gs("sample_quasirandom", 8, 4),
+    png_sample_dist = plot_sample_quasirandom(star, colour_var = "group") |> gs("sample_quasirandom", 8, 4),
     fig_mean_var = plot_mean_var(star, group_var = "group"),
     fig_distance_mat = plot_distance_matrix(star),
     fig_clustering = plot_clustering(star, colour_var = "group"),
@@ -37,7 +37,7 @@ targets_main <- function() {
 
    star <- tar_plan(
     star = read_and_process_star(config, metadata, genes, min_count = 10),
-    bg = read_bedgraphs(config, metadata),
+    #bg = read_bedgraphs(config, metadata),
     
     tab_star_log = star$star_log,
     fig_star_log = plot_star_log(star, group_var = "group"),
@@ -61,13 +61,15 @@ targets_main <- function() {
     tar_target(version_file, file.path(config$data_path, "environment.txt"), format = "file"),
     software_versions = get_software_versions(
       version_file,
-      selection = c("fastqc", "fastq-screen", "fastp", "ribodetector", "multiqc", "star", "samtools", "bedtools", "snakemake", "drmaa")
+      selection = c("fastqc", "fastq-screen", "fastp", "ribodetector", "multiqc", "star", "samtools", "bedtools", "snakemake", "drmaa", "deeptools")
     )
   )
   
   c(
     get_annotations,
     setup_experiment,
-    get_environment
+    get_environment,
+    qc,
+    star
   )
 }
