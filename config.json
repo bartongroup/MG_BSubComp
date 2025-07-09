@@ -1,0 +1,18 @@
+{
+  "data_path" : "rna_seq",
+  "yaml_file" : "rna_seq/config/config.yaml",
+  "metadata_file" : "info/EGP023_25_B1-samplelist-26062025.xlsx",
+  "dir" : {
+    "fastq_trimmed" : "fastq_trimmed",
+    "fastq_clean" : "fastq_clean",
+    "mapping" : "starmap",
+    "read_count" : "readcount",
+    "chr_count" : "chrcount",
+    "fastq_screen" : "fscreen",
+    "bedgraph" : "bedgraph",
+    "qc" : "qc" 
+  },
+  "sample_file" : "config/samples.txt",
+  "logfc_limit" : 1,
+  "fdr_limit" : 0.01
+}

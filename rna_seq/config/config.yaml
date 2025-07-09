@@ -1,0 +1,12 @@
+fastq_screen_config: config/fastq_screen.conf
+
+read_length: 100
+
+genome_url: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/002/055/965/GCF_002055965.1_ASM205596v1/GCF_002055965.1_ASM205596v1_genomic.fna.gz
+gff_url: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/002/055/965/GCF_002055965.1_ASM205596v1/GCF_002055965.1_ASM205596v1_genomic.gff.gz
+gtf_url: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/002/055/965/GCF_002055965.1_ASM205596v1/GCF_002055965.1_ASM205596v1_genomic.gtf.gz
+
+window_size: 1000
+
+samples: config/samples.txt
+ 

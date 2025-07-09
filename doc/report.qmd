@@ -1,0 +1,360 @@
+---
+title: "Transcriptomic changes in *ΔcomA* and *ΔrapA* mutants in *Bacillus subtilis*"
+author:
+  - name: Marek Gierlinski
+    affiliations: Data Analysis Group
+    note: "Creator of this report"
+  - name: Jonathan Griffin
+    affiliations: Molecular Microbiology
+  - name: Nicola Stanley-Wall
+    affiliation: Molecular Microbiology
+date: today
+date-format: "D MMMM YYYY"
+execute:
+  echo: false
+  cache: true
+  warning: false
+format:
+  html:
+    theme:
+      - journal
+      - report.scss
+    toc: true
+    number-sections: true
+self-contained: true
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r}
+#| label: libraries
+#| cache: false
+suppressPackageStartupMessages({
+  library(ggplot2)
+  library(dplyr)
+  library(tidyr)
+  library(targets)
+  library(gt)
+  library(cowplot)
+})
+tar_config_set(store = "../_targets")
+```
+
+```{r}
+#| label: functions
+N <- function(n) {
+  prettyNum(n, big.mark = ",")
+}
+
+gt_table <- function(s) {
+  s |> 
+    gt::gt() |> 
+    gt::tab_options(
+      table.align = "center",
+      heading.align = "center",
+      data_row.padding = gt::px(3)
+    ) |> 
+    gt::opt_table_font(
+      font = c(
+        gt::default_fonts()
+      )
+    )
+} 
+```
+
+
+```{r config}
+tar_load(config)
+```
+
+# Proposal
+
+## Samples and experiment
+
+This RNAseq experiment aims to compare transcriptomic changes between 5 biological replicates of two *Bacillus subtilis* strains NRS6942 (Control NCIB 3610 *amyE::Phy-spank-gfp mut2 (cml)*) and NRS7771 (Experimental NCIB 3610 *amyE::Phy-spank-gfp mut2 (cml) ΔrapP ΔcomA::spec*). The strains were grown in the same conditions at 30°C on MSgg media agar plates for 20^h^.
+ 
+The control strain NRS6942 is a mutant of the lab strain NCIB 3610, containing a GFP tag to amyE; the experimental strain NRS7771 is a mutant of that strain, in which the genes rapP and comA have also been knocked out. 
+
+The experiment should be quite easy to analyse as there's only one contrast group (NRS6942-NRS7771). 
+ 
+## Biological background
+
+*B. subtilis* NCIB 3610 outcompetes other *Bacillus* strains; the project aimed to identify genetic changes that might allow the outcompeted strains to better compete and endure NCIB 3610. Through an untargeted evolution approach, the NSW lab generated various strains that were able to better compete. Analysis of these better-competing strains indicated that a mutation in the *comP* gene increased their survivability. To further analyse this, the NSW knocked out other genes (eg the transcription factor *comA*) in the *comQXPA* gene cluster to which *comP* belongs, as well as the *rapP* gene, another gene critical to quorum sensing and bacterial competition.
+ 
+One such mutant, a *comA rapP* mutant line (NRS7771), was found to grow differently to its WT (NRS6942( (Figure below), indicating that both *comA* and *rapP* are important to Bacillus growth. We aimed to characterise the transcriptomic changes contributing to the changes in development.
+ 
+The biological question is, how is the Bacillus transcriptome altered by mutation of comA and rapP? We are expecting there to be differences in cell division and reproduction, as well as in quorum sensing. Given the visual phenotype differences, we may also see changes in transcripts associated to biofilm development eg exopolysaccharides.
+ 
+
+```{r, out.width="100%"}
+#| label: fig-phenotypes
+#| fig-cap: Observed phenotypes
+knitr::include_graphics("images/phenotypes.png")
+```
+ 
+
+## What we're looking for
+
+A full start-to-finish analysis for the RNAseq data. The reads will need checking via MD5s, trimming, and aligning to the reference genome for NCIB3610 (accessions are CP020102 for the chromosome and CP020103 for the plasmid pBS32- I think these are stored here Y:\\nrstanleywall\\fasta_genomes) and a fastQC to check they're ideal, followed by quantification for differential analysis.
+ 
+Any tools and output showing significantly up- or down-regulated genes in the comparison group, ideally with adjP < 0.05 and with a log2 fold change of 1. I'd love to see the various outputs eg volcano plots we can generate using your tool suite!
+ 
+For a first pass, a GO analysis would be helpful for painting a broad picture of the affected processes, after which we can hone in on interesting changes in operons and known regulatory pathways. I don't know offhand where the annotation gff file for the GO terms and gene names for each transcript is, however, and will get it from Nicola when she's back from annual leave.
+
+
+
+
+# Samples
+
+There are two biological conditions (control and mutant), each in five replicates. Sample names are shown in @tbl-metadata.
+
+```{r}
+#| label: tbl-metadata
+#| tbl-cap: Raw sample names (as in FASTQ file names) and simplified samples names used here.
+tar_read(metadata) |> 
+  select(raw_sample, sample, group, replicate) |> 
+  gt() 
+```
+
+# Data analysis
+
+The data analysis was conducted in two stages. The first stage was performed on the Life Sciences cluster using a Snakemake script. This stage included the cleaning, quality control, and mapping of FASTQ files. The software versions used in this stage are listed in @tbl-software. In the second stage, the data were imported into Positron and further processed using R. The versions of the R packages utilized are provided in @sec-session-info. All code used in this project is available on [GitHub](https://github.com/bartongroup/MG_BSubComp).
+
+```{r}
+#| label: tbl-software
+#| tbl-cap: Software used for cleaning, quality control and mapping FASTQ files.
+tar_read(software_versions) |> 
+  select(Software = name, Version = version) |> 
+  gt() |> 
+  cols_width(
+    Software ~ px(150)
+  ) 
+```
+
+
+# Sequencing and mapping
+
+## Sequencing
+
+Sequencing was carried out by Edinburgh Genetics. 2x100 bp paired-end stranded reads were provided.
+
+## Ribosomal RNA removal
+
+A tool [RiboDetector](https://github.com/hzi-bifo/RiboDetector) was used
+to remove reads matching ribosomal RNA from FASTQ files. RiboDetector is
+a machine learning tool that can recognize ribosomal RNA. @fig-ribo
+show no substantial ribosomal contamination.
+
+```{r}
+#| label: fig-ribo
+#| fig-cap: Proportion of ribosomal reads detected in each sample.
+#| fig-width: 5
+#| fig-height: 5
+#tar_read(fig_ribo_prop)
+```
+
+## FastQ screen
+
+[FastQ
+screen](https://www.bioinformatics.babraham.ac.uk/projects/fastq_screen/)
+was used to map a sample of reads to several genomes to check for
+contamination. @fig-fscreen shows one hit one genome percentage. Note,
+the fill scale is logarithmic with grey indicating zero. There is no notable contamination from other organisms.
+
+
+```{r}
+#| label: fig-fscreen
+#| fig-cap: Fscreen results, one hit per one genome and multiple hits per one genome are inluded.
+#| fig-width: 4.5
+#| fig-height: 4
+#tar_read(fig_fscreen)
+```
+
+## Read quality
+
+@fig-read-qual shows read quality as a function of base pair position,
+@fig-read-qual-clust shows hierarchical clustering based on read
+quality. This has nothing to do with biology, but rather shows potential
+batch effects related to sequencing or sample quality. We see that the sample `ctrl_5` stands out a bit.
+
+```{r}
+#| label: fig-read-qual
+#| fig-cap: Read quality.
+#| fig-width: 8
+#| fig-height: 3
+#tar_read(fig_read_qual)
+```
+
+```{r}
+#| label: fig-read-qual-clust
+#| fig-cap: Clustering based on read quality.
+#| fig-width: 4
+#| fig-height: 3
+#tar_read(fig_read_qual_clust)
+```
+
+
+
+## Genome and annotations
+
+Bacillus subtilis NCIB 3610 [genome assembly ASM205596v1](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_002055965.1/) has been downloaded from NCBI (genome sequence and GFF annotations). It consists of two sequences, CP020102.1 for the chromosome and CP020103.1 for the plasmid. The lengths of the chromosome and plasmid are 4,215,607 and 84,215 bp, respectively.
+
+## Mapping
+
+[STAR](https://github.com/alexdobin/STAR) was used to map reads to the reference genome ASM205596v1 downloaded from NCBI. The following parameters were used:
+
+```         
+--outFilterType BySJout 
+--outSAMtype BAM SortedByCoordinate
+--outFilterMultimapNmax 2
+--readFilesCommand zcat
+--quantMode GeneCounts
+```
+
+## Mapping properties
+
+@fig-star-log and @fig-map-count show mapping summaries.
+
+```{r}
+#| label: fig-star-log
+#| fig-cap: STAR mapping properties. 
+#| fig-width: 6
+#| fig-height: 10
+#tar_read(fig_star_log) 
+```
+
+```{r}
+#| label: fig-map-count
+#| fig-cap: Input counts vs mapped and counted reads. Samples are ordered from the lowest to the highest percentage of uniquely mapped reads.
+#| fig-width: 8
+#| fig-height: 4
+#tar_read(fig_map_count)
+```
+
+## Strandedness
+
+RNA-seq reads can be either strand-specific or unstranded, depending on the protocol used. The orientation of stranded paired-end reads also varies with the protocol. *STAR* provides the following count measures in the quantification file:
+
+ - Column 2: Counts for unstranded RNA-seq
+ - Column 3: Counts for the first read strand aligned with RNA
+ - Column 4: Counts for the second read strand aligned with RNA
+ 
+@fig-star-sense illustrates the summary of total counts in each column of a sample file. The counts for the first and second read strands are nearly identical, indicating that our reads are unstranded.
+
+::: {.callout-note}
+We recommend instructing the sequencing centre to use a stranded protocol when submitting samples. Stranded data improve mapping accuracy.
+:::
+
+
+```{r}
+#| label: fig-star-sense
+#| fig-cap: Distribution of log read count per STAR output file column. The second strand reads are dominant, so we read column 4.
+#| fig-width: 5
+#| fig-height: 3
+#tar_read(fig_star_sense)
+```
+
+## Full QC report
+
+The full quality control report, collated by MultiQC, is available [here](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/doc/multiqc.html).
+
+# Read count properties
+
+@fig-sample-dist shows read count distribution.
+
+```{r}
+#| label: fig-sample-dist
+#| fig-cap: Distribution of regularised log-count per sample.
+#knitr::include_graphics("../fig/sample_quasirandom.png") 
+```
+
+Next figures are based on [regularised logarithm](https://rdrr.io/bioc/DESeq2/man/rlog.html) (rlog) of raw count data. @fig-properties shows Pearson's correlation coefficient between each pair of samples, PCA results and hierarchical clustering.
+
+```{r}
+#| label: fig-properties
+#| fig-cap: A. Correlation matrix. B. PCA of rlog-transformed counts. C. Hierarchical clustering of samples based on rlog-transformed counts and correlation distance.
+#| fig-width: 8
+#| fig-height: 6
+#g1 <- tar_read(fig_distance_mat)
+#g2 <- tar_read(fig_pca)
+#g3 <- tar_read(fig_clustering) 
+#cowplot::plot_grid(g1, g2, g3, nrow = 2, labels = c("A", "B", "C"))
+```
+
+
+
+# Resources {#sec-resources}
+
+## Interactive data explorer {#sec-shiny-app}
+
+-   [Differential
+    expression](https://shiny.compbio.dundee.ac.uk/mgierlinski/private/bsub_comp/de)
+
+## Downloads
+
+-   [Differential expression
+    results](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/tab/da.csv)
+
+## Code
+
+-   [R code in GitHub](https://github.com/bartongroup/MG_BSubComp)
+
+# Session info {#sec-session-info}
+
+```{r}
+#| label: session-info
+#| cache: false
+targets::tar_load(session_info)
+```
+
+```{r}
+#| label: gt_session
+gt_session <- function(s) {
+  s |> 
+    gt::gt() |> 
+    gt::tab_options(
+      table.align = "left",
+      data_row.padding = gt::px(3)
+    )
+#    gt::opt_table_font(
+#      font = c(
+#        gt::google_font(name = "Roboto Mono"),
+#        gt::default_fonts()
+#      )
+#    )
+}
+```
+
+### Platform
+
+```{r}
+#| label: session-info-platform
+#| cache: false
+session_info$platform |>
+  unlist() |>
+  tibble::as_tibble(rownames = "Setting") |> 
+  dplyr::rename(Value = value) |> 
+  gt_session() |> 
+  gt::cols_width(
+    Setting ~ gt::px(150)
+  )
+```
+
+### Packages
+
+```{r}
+#| label: session-info-packages
+#| cache: false
+session_info$packages |>
+  tibble::as_tibble() |>
+  dplyr::filter(attached == TRUE) |> 
+  dplyr::select(Package = package, Version = loadedversion, Date = date, Source = source) |> 
+  gt_session() |> 
+  gt::cols_width(
+    Package ~ gt::px(150),
+    Version ~ gt::px(80),
+    Date ~ gt::px(150),
+    Source ~ gt::px(400)
+  )
+```

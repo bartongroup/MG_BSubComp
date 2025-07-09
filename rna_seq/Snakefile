@@ -1,0 +1,341 @@
+# Snakemake file for processing RNA-seq data with STAR
+# Using Ensembl genome and annotations
+# STAR options are set for GTF annotations
+#
+### To install from scratch
+#
+# mamba create --name bsub_comp
+# mamba activate bsub_comp
+# mamba install snakemake=7.32.4 fastqc multiqc samtools bedtools star fastp fastq-screen drmaa qualimap ribodetector
+#
+### To recreate the environment
+#
+# mamba create --name myenv --file spec-file.txt
+
+import os
+configfile: 'config/config.yaml'
+
+# Genome file configuration
+
+genome_url =  config['genome_url']
+gtf_url =  config['gtf_url']
+
+# Local
+
+genome_dir = 'genome'
+
+genome_file_name =  os.path.basename(genome_url).removesuffix('.gz')
+gtf_file_name =  os.path.basename(gtf_url).removesuffix('.gz')
+
+genome_file = os.path.join(genome_dir, genome_file_name)
+gtf_file = os.path.join(genome_dir, gtf_file_name)
+
+genome_index = genome_file + '.fai'
+genome_size_file = genome_file + '.txt'
+
+# Read length for ribodetector
+read_length = config['read_length']
+
+# Fastq Screen config file
+fscreen_config = config['fastq_screen_config']
+
+# Files to test if an index was created
+star_index_dir = 'star_index'
+star_index_test_file = os.path.join(star_index_dir, 'chrName.txt')
+
+# for bedgraph
+window_size = str(config['window_size'])
+window_file =  os.path.join('bedgraph', 'window.' + window_size + '.bed')
+
+# Read samples from a file
+with open(config['samples']) as f:
+    SAMPLES = f.read().splitlines()
+
+PAIRS = ['R1', 'R2']
+
+
+# Lists for rule all
+
+ENVIRONMENT = ['environment.txt', 'spec-file.txt']
+TRIM_COUNTS = expand('fastq_trimmed/{sample}_count.txt', sample = SAMPLES)
+CLEAN_COUNTS = expand('fastq_clean/{sample}_count.txt', sample = SAMPLES)
+QCS = expand('qc/{sample}_{pair}_fastqc.html', sample = SAMPLES, pair = PAIRS)
+QMS = expand('qm/bamqc/{sample}/genome_results.txt', sample = SAMPLES)
+FSCREENS = expand('fscreen/{sample}_{pair}_screen.txt', sample = SAMPLES, pair = PAIRS)
+MULTIQC = ['multiqc/report.html']
+BAMS = expand('bam/{sample}.bam', sample = SAMPLES)
+BAIS = expand('bam/{sample}.bam.bai', sample = SAMPLES)
+COUNTS = expand('readcount/{sample}.txt', sample = SAMPLES)
+CHRSTATS = expand('chrcount/{sample}.txt', sample = SAMPLES)
+BEDGRAPHS = expand('bedgraph/{sample}.' + window_size + '.bedgraph', sample = SAMPLES)
+
+####################################################################
+
+rule all:
+    input: ENVIRONMENT + QCS + QMS + CHRSTATS + MULTIQC + COUNTS + BEDGRAPHS + TRIM_COUNTS + CLEAN_COUNTS
+
+####################################################################
+# Save environment
+
+rule environment:
+    output:
+        table = 'environment.txt',
+        spec = 'spec-file.txt'
+    shell:
+       '''
+       mamba list > {output.table}
+       mamba list --explicit > {output.spec}
+       '''
+
+####################################################################
+# Trim adapter sequences.
+
+rule trim_adapters:
+    input:
+        R1 = 'fastq/batch1_{sample}_L004_R1_001.fastq.gz',
+        R2 = 'fastq/batch1_{sample}_L004_R2_001.fastq.gz'
+    output:
+        R1 = 'fastq_trimmed/{sample}_R1.fastq.gz',
+        R2 = 'fastq_trimmed/{sample}_R2.fastq.gz',
+        report = 'fastq_trimmed/{sample}_report.html'
+    threads: 4
+    shell:
+        '''
+        mkdir -p fastq_trimmed
+        mkdir $TMPDIR/fastp
+        fastp -w {threads} -h $TMPDIR/fastp/fastp.html -g -i {input.R1} -I {input.R2} -o $TMPDIR/fastp/R1.gz -O $TMPDIR/fastp/R2.gz
+        mv $TMPDIR/fastp/R1.gz {output.R1}
+        mv $TMPDIR/fastp/R2.gz {output.R2}
+        mv $TMPDIR/fastp/fastp.html {output.report}
+        '''
+
+####################################################################
+# Remove ribosomal sequences
+
+rule clean_ribo:
+    input:
+        R1 = 'fastq_trimmed/{sample}_R1.fastq.gz',
+        R2 = 'fastq_trimmed/{sample}_R2.fastq.gz'
+    output:
+        R1 = 'fastq_clean/{sample}_R1.fastq.gz',
+        R2 = 'fastq_clean/{sample}_R2.fastq.gz'
+    threads: 12
+    shell:
+        '''
+        mkdir -p fastq_clean
+        ribodetector_cpu -t {threads} -l {read_length} -i {input.R1} {input.R2} -e rrna --chunk_size 1024 -o $TMPDIR/ribo.R1.fastq $TMPDIR/ribo.R2.fastq
+        gzip -c $TMPDIR/ribo.R1.fastq > {output.R1}
+        gzip -c $TMPDIR/ribo.R2.fastq > {output.R2}
+        '''
+        
+####################################################################
+# Quality control
+
+rule fastqc:
+    input: 'fastq_trimmed/{prefix}.fastq.gz'
+    output:
+        html = 'qc/{prefix}_fastqc.html',
+        zip = 'qc/{prefix}_fastqc.zip'
+    threads: 2
+    shell:
+        'fastqc -o qc --threads {threads} -f fastq {input}'
+
+####################################################################
+# Fastq Screen
+#   genomes must be installed manually: fastq_screen --get_genomes
+#   and config file prepared
+
+rule fastq_screen:
+    input: 'fastq_trimmed/{prefix}.fastq.gz'
+    output:
+        html = 'fscreen/{prefix}_screen.html',
+        txt = 'fscreen/{prefix}_screen.txt'
+    threads: 12
+    shell:
+        '''
+        fastq_screen --conf {fscreen_config} --outdir $TMPDIR/fscreen --threads {threads} {input}
+        mv $TMPDIR/fscreen/{wildcards.prefix}_screen.html {output.html}
+        mv $TMPDIR/fscreen/{wildcards.prefix}_screen.txt {output.txt}
+        '''
+
+
+####################################################################
+# Final multiqc from fastqc and fast_screen
+
+rule multiqc:
+    input:
+        fscreen = FSCREENS,
+        qc = QCS,
+        qm = QMS,
+        star = expand('starmap/{sample}_Log.final.out', sample = SAMPLES),
+        trimmed = expand('fastq_trimmed/{sample}_report.html', sample = SAMPLES)
+    output: 'multiqc/report.html'
+    shell:
+        'multiqc -f --filename report --outdir multiqc fastq_trimmed qc fscreen starmap qm/bamqc qm/rnaseq'
+
+####################################################################
+# Count reads
+
+rule count_trimmed:
+    input: 'fastq_trimmed/{sample}_R1.fastq.gz'
+    output: 'fastq_trimmed/{sample}_count.txt'
+    shell:
+        'zcat {input} | echo $((`wc -l`/4)) > {output}'
+
+rule count_clean:
+    input: 'fastq_clean/{sample}_R1.fastq.gz'
+    output: 'fastq_clean/{sample}_count.txt'
+    shell:
+        'zcat {input} | echo $((`wc -l`/4)) > {output}'
+
+
+####################################################################
+# Load genome files
+
+rule load_genome:
+    output: genome_file
+    shell:
+        'wget {genome_url} -O - | gunzip -c > {genome_file}'
+
+
+rule load_gtf:
+    output: gtf_file
+    shell:
+        'wget {gtf_url} -O - | gunzip -c > {gtf_file}'
+
+####################################################################
+# Index genome, create chromosome size file
+
+rule index_genome:
+    input: genome_file
+    output: genome_index
+    shell:
+        'samtools faidx {input}'
+
+rule size_genome:
+    input: genome_index
+    output: genome_size_file
+    shell:
+        'cut -f 1,2 {input} > {output}'
+
+####################################################################
+# STAR
+
+rule star_index:
+    input:
+      genome = genome_file,
+      gtf = gtf_file
+    output: star_index_test_file
+    threads: 24
+    shell:
+        '''
+        STAR \
+        --runMode genomeGenerate \
+        --genomeFastaFiles {input.genome} \
+        --sjdbGTFfile {input.gtf} \
+        --outTmpDir $TMPDIR/star_index \
+        --genomeDir {star_index_dir} \
+        --genomeSAindexNbases 12 \
+        --runThreadN {threads}
+        '''
+
+
+rule star_mapping:
+    input:
+        R1 = 'fastq_clean/{sample}_R1.fastq.gz',
+        R2 = 'fastq_clean/{sample}_R2.fastq.gz',
+        testfile = star_index_test_file,
+        gtf = gtf_file
+    output:
+        bam = 'bam/{sample}.bam',
+        readcount = 'readcount/{sample}.txt',
+        finallog = 'starmap/{sample}_Log.final.out'
+    threads: 12
+    shell:
+        '''
+         echo "host:" $HOSTNAME
+         echo "tmpdir:" $TMPDIR
+         STAR \
+         --genomeDir {star_index_dir} \
+         --sjdbGTFfile {input.gtf} \
+         --readFilesIn {input.R1} {input.R2} \
+         --outTmpDir $TMPDIR/starmap_tmp \
+         --outFileNamePrefix $TMPDIR/starmap/{wildcards.sample}_ \
+         --outFilterType BySJout \
+         --outSAMtype BAM SortedByCoordinate \
+         --outFilterMultimapNmax 2 \
+         --readFilesCommand zcat \
+         --quantMode GeneCounts \
+         --runThreadN {threads}
+         mv $TMPDIR/starmap/{wildcards.sample}_Aligned.sortedByCoord.out.bam {output.bam}
+         mv $TMPDIR/starmap/{wildcards.sample}_ReadsPerGene.out.tab {output.readcount}
+         mv $TMPDIR/starmap/{wildcards.sample}_Log.final.out {output.finallog}
+        '''
+
+
+####################################################################
+# Index BAM files
+
+rule index_bam:
+    input: 'bam/{sample}.bam'
+    output: 'bam/{sample}.bam.bai'
+    threads: 8
+    shell:
+        'samtools index {input}'
+
+
+####################################################################
+# Counts per chromosome
+
+rule chr_counts:
+    input: 
+      bam = 'bam/{sample}.bam',
+      bai = 'bam/{sample}.bam.bai'
+    output: 'chrcount/{sample}.txt'
+    threads: 8
+    shell:
+        'samtools idxstats {input.bam} > {output}'
+
+####################################################################
+# Qualimap
+
+rule qualimap_bamqc:
+    input:
+        bam = 'bam/{sample}.bam',
+        bai = 'bam/{sample}.bam.bai'
+    output: 'qm/bamqc/{sample}/genome_results.txt'
+    threads: 8
+    params:
+        mem = '24G'
+    shell:
+        '''
+        rm -fR qm/bamqc/{wildcards.sample}
+        qualimap bamqc -nt {threads} -bam {input.bam} -outdir qm/bamqc/{wildcards.sample} --java-mem-size={params.mem}
+        '''
+
+rule qualimap_rnaseq:
+    input:
+        bam = 'bam/{sample}.bam',
+        bai = 'bam/{sample}.bam.bai',
+        gtf = gtf_file
+    output: 'qm/rnaseq/{sample}/rnaseq_qc_results.txt'
+    params:
+        mem = '24G'
+    shell:
+        '''
+        rm -fR qm/rnaseq/{wildcards.sample}
+        qualimap rnaseq --paired -bam {input.bam} -gtf {input.gtf} -outdir qm/rnaseq/{wildcards.sample} --java-mem-size={params.mem}
+        '''
+
+
+####################################################################
+# bedGraph files
+
+rule bedgraph:
+    input:
+        bam = 'bam/{sample}.bam',
+        bai = 'bam/{sample}.bam.bai'
+    output: 'bedgraph/{sample}.' + window_size + '.bedgraph'
+    shell:
+        'bamCoverage -b {input.bam} -o {output} --binSize {window_size} --outFileFormat bedgraph'
+

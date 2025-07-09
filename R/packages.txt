@@ -1,0 +1,15 @@
+qs2
+janitor
+tidyverse
+edgeR
+jsonlite
+ggdendro
+dendsort
+broom
+cowplot
+ggbeeswarm
+ggpointdensity
+ggrepel
+fgsea
+fenr
+rtracklayer
