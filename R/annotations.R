@@ -20,7 +20,8 @@ get_gene_annotations_from_gtf <- function(gtf) {
     end,
     strand,
     id = gene_id,
-    gene_symbol = gene
+    gene_symbol = gene,
+    biotype = gene_biotype
   )
 
   # only rows marked as CDS contain gene desscription
@@ -39,11 +40,12 @@ get_go_mapping_from_gtf <- function(gtf) {
     as_tibble() |> 
     filter(type == "CDS") |> 
     select(
-      gene_symbol = gene,
+      id = gene_id,
       term_id = Ontology_term
     ) |> 
-      unnest(term_id) |> 
-    distinct()
+    unnest(term_id) |> 
+    distinct() |> 
+    drop_na()
   terms <- fenr:::fetch_go_terms(use_cache = TRUE, on_error = "stop") |> 
     filter(term_id %in% mapping$term_id)
 
@@ -57,11 +59,8 @@ get_go_mapping_from_gtf <- function(gtf) {
 get_functional_terms <- function(gtf, kg_spec) {
   cat("Loading GO term data\n")
   go <- get_go_mapping_from_gtf(gtf)
-  cat("Loading KEGG data\n")
-  kg <- fenr::fetch_kegg(species = kg_spec)
   terms = list(
-    go = go,
-    kg = kg
+    go = go
   )
 }
 
@@ -71,7 +70,34 @@ prepare_terms_fenr <- function(terms, all_features) {
   
   map(ontologies, function(ont) {
     trm <- terms[[ont]]
-    fenr::prepare_for_enrichment(trm$terms, trm$mapping, all_features, feature_name = "gene_symbol")
+    fenr::prepare_for_enrichment(trm$terms, trm$mapping, all_features, feature_name = "id")
   }) |> 
     set_names(ontologies)
+}
+
+
+# Download operon clustering from SubtiWiki
+get_operons <- function() {
+  url <- "https://subtiwiki.uni-goettingen.de/v5/api/operon/"
+  req <- httr2::request(url)
+  resp <- httr2::req_perform(req)
+  js <- httr2::resp_body_json(resp)
+
+  data <- js$data
+  ops <- map(data, function(d) {
+    id <- d$id
+    map(d$genes, function(gene) {
+      tibble(gene_symbol = gene$name)
+    }) |> 
+      list_rbind() |> 
+      mutate(operon_id = id)
+  }) |> 
+    list_rbind() 
+
+  ops_names <- ops |> 
+    group_by(operon_id) |> 
+    summarise(operon = str_c(sort(gene_symbol), collapse = "-"))
+
+  ops |> 
+    left_join(ops_names, by = "operon_id")
 }

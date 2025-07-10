@@ -59,13 +59,13 @@ plot_volma <- function(res, point_size, point_alpha) {
 }
 
 plot_ma <- function(res, a = "AveExpr", fc = "logFC", p = "PValue", fdr = "FDR", group = "contrast",
-                    fdr_limit = 0.05, point_size = 0.5, point_alpha = 0.5) {
+                    fdr_limit = 0.05, logfc_limit = 0, point_size = 0.5, point_alpha = 0.5) {
   res |>
     mutate(
       x = get(a),
       y = get(fc),
       group = get(group),
-      sel = get(fdr) < fdr_limit
+      sel = get(fdr) < fdr_limit & abs(get(fc)) >= logfc_limit
     ) |>
     plot_volma(point_size, point_alpha) +
     geom_hline(yintercept = 0, linewidth = 0.1, alpha = 0.5) +
@@ -73,13 +73,13 @@ plot_ma <- function(res, a = "AveExpr", fc = "logFC", p = "PValue", fdr = "FDR",
 }
 
 plot_volcano <- function(res, fc = "logFC", p = "PValue", fdr = "FDR", group = "contrast",
-                         fdr_limit = 0.05, point_size = 0.5, point_alpha = 0.5) {
+                         fdr_limit = 0.05, logfc_limit = 0, point_size = 0.5, point_alpha = 0.5) {
   res |>
     mutate(
       x = get(fc),
       y = -log10(get(p)),
       group = get(group),
-      sel = get(fdr) < fdr_limit
+      sel = get(fdr) < fdr_limit & abs(get(fc)) >= logfc_limit
     ) |>
     plot_volma(point_size, point_alpha) +
     geom_vline(xintercept = 0, linewidth = 0.1, alpha = 0.5) +
@@ -102,10 +102,10 @@ plot_pdist <- function(res, p = "PValue", group = "contrast", n_bins = 50) {
 }
 
 plot_vmp <- function(res, a = "logCPM", fc = "logFC", p = "PValue", fdr = "FDR", group = "contrast",
-                     fdr_limit = 0.05, point_size = 0.5, point_alpha = 0.5, n_bins = 50){
+                     fdr_limit = 0.05, logfc_limit = 0, point_size = 0.5, point_alpha = 0.5, n_bins = 50){
   list(
-    volcano = plot_volcano(res, fc, p, fdr, group, fdr_limit, point_size, point_alpha),
-    ma = plot_ma(res, a, fc, p, fdr, group, fdr_limit, point_size, point_alpha),
+    volcano = plot_volcano(res, fc, p, fdr, group, fdr_limit, logfc_limit, point_size, point_alpha),
+    ma = plot_ma(res, a, fc, p, fdr, group, fdr_limit, logfc_limit, point_size, point_alpha),
     pdist = plot_pdist(res, p, group, n_bins)
   )
 }
@@ -288,87 +288,202 @@ plot_sample_distributions <- function(set, bins = 100, ncol = 15, what = "rlog",
     labs(x = what, y = "Density", fill = colour_var)
 }
 
-plot_kernels <- function(set, what = "rlog", xlab = "rlog") {
-  d <- set$dat |> 
-    mutate(val = get(what)) |> 
-    select(sample, val) |> 
-    nest(data = val) |> 
+plot_kernels <- function(set, what = "abu_med", xlab = "Normalised abundance", log_scale = FALSE) {
+  env <- new.env(parent = globalenv())
+  env$what <- what
+  env$xlab <- xlab
+
+  d <- set$dat
+  if(log_scale)
+    d <- d |> mutate(!!what := log10(get(what)))
+
+  env$d <- d |>
+    mutate(val = get(what)) |>
+    select(sample, val) |>
+    nest(data = val) |>
     mutate(
       krn = map(data, ~density(.x$val, bw = "SJ") |> tidy())
-    ) |> 
-    select(-c(data)) |> 
+    ) |>
+    select(-c(data)) |>
     unnest(krn)
-  rm(set)
-  ggplot(d, aes(x = x, y = y, group = sample)) +
-    theme_bw() +
-    theme(
-      panel.grid = element_blank()
-    ) +
-    geom_line(alpha = 0.1) +
-    labs(x = xlab, y = "Density") +
-    scale_y_continuous(expand = expansion(mult = c(0, 0.03)))
+
+  with(env, {
+    ggplot(d, aes(x = x, y = y, group = sample)) +
+      theme_bw() +
+      theme(
+        panel.grid = element_blank()
+      ) +
+      geom_line(alpha = 0.1) +
+      labs(x = xlab, y = "Density") +
+      scale_y_continuous(expand = expansion(mult = c(0, 0.03)))
+  })
 }
 
 
-plot_clustering <- function(set, text_size = 10, what = "rlog", dist.method = "euclidean",
-                            clust.method = "complete", colour_var = "group", sample_var = "sample") {
-  tab <- dat2mat(set$dat, what, sample_var = sample_var)
-  colnames(tab) <- set$metadata[[sample_var]]
+plot_clustering <- function(set, text_size = 10, what = "rlog", id_sel = NULL, names = "sample", dist.method = "euclidean",
+                            clust.method = "complete", colour_var = "group", skip_selection = FALSE) {
 
-  dendr <- t(tab) |> 
-    dist(method = dist.method) |> 
+  env <- new.env(parent = globalenv())
+  env$text_size <- text_size
+
+  #dat <- select_good_data(set, skip_selection)
+  dat <- set$dat
+  if(!is.null(id_sel)) {
+    dat <- dat |> filter(id %in% id_sel)
+  }
+
+  tab <- dat2mat(dat, value_col = what, name_col = names)
+
+  dendr <- t(tab) |>
+    dist(method = dist.method) |>
     hclust(method = clust.method) |>
-    dendsort::dendsort() |> 
+    dendsort::dendsort() |>
     ggdendro::dendro_data()
-  
-  seg <- ggdendro::segment(dendr)
+
+  env$seg <- ggdendro::segment(dendr)
   meta <- set$metadata |>
     mutate(
       colvar = get(colour_var),
-      sample = as.character(get(sample_var))
+      namevar = get(names) |> as.character()
     )
-  labs <- left_join(dendr$labels |> mutate(label = as.character(label)), meta, by = c("label" = "sample")) |> 
+  env$labs <- left_join(dendr$labels |> mutate(label = as.character(label)), meta, by = c("label" = "namevar")) |>
     mutate(colour = okabe_ito_palette[as_factor(colvar)])
-  theme.d <- ggplot2::theme(
+  env$theme.d <- ggplot2::theme(
     panel.grid.major = ggplot2::element_blank(),
     panel.grid.minor = ggplot2::element_blank(),
     panel.background = ggplot2::element_blank(),
-    axis.text.y = ggplot2::element_text(size = text_size, colour = labs$colour),
+    axis.text.y = ggplot2::element_text(size = text_size, colour = env$labs$colour),
     axis.line.y = ggplot2::element_blank(),
     axis.line.x = ggplot2::element_line(linewidth = 0.5),
     axis.ticks.y = ggplot2::element_blank()
   )
-  rm(set, tab, dendr)
-  ggplot() +
-    theme.d +
-    coord_flip() +
-    geom_segment(data = seg, aes(x = x, y = y, xend = xend, yend = yend)) +
-    scale_x_continuous(breaks = seq_along(labs$label), labels = labs$label) +
-    scale_y_continuous(expand = c(0,0), limits = c(0, max(seg$y) * 1.03)) +
-    scale_colour_manual(values = okabe_ito_palette) +
-    labs(x = NULL, y = "Distance")
+
+  with(env, {
+    ggplot() +
+      theme.d +
+      coord_flip() +
+      geom_segment(data = seg, aes(x = x, y = y, xend = xend, yend = yend)) +
+      scale_x_continuous(breaks = seq_along(labs$label), labels = labs$label, expand = expansion(add = 1)) +
+      scale_y_continuous(expand = c(0, 0), limits = c(0, max(seg$y) * 1.03)) +
+      scale_colour_manual(values = okabe_ito_palette) +
+      labs(x = NULL, y = "Distance")
+  })
 }
 
 
-plot_distance_matrix <- function(set, what = "rlog", text_size = 10) {
-  tab <- dat2mat(set$dat, what)
+plot_clustering_circular <- function(set, what = "rlog", dist.method = "euclidean",
+                                     clust.method = "complete", colour_var = "group", shape_var = "group") {
+  env <- new.env(parent = globalenv())
+  env$shape_var <- shape_var
+  env$colour_var <- colour_var
+
+  dat <- select_good_data(set) |>
+    left_join(set$metadata, by = "sample")
+
+  tab <- dat2mat(dat, value_col = what)
+  gd <- which(rowSums(is.na(tab)) == 0)
+  tab <- tab[gd, ]
+
+  ph <- t(tab) |>
+    dist(method = dist.method) |>
+    hclust(method = clust.method) |>
+    ape::as.phylo() |>
+    ape::unroot()
+
+  m <- set$metadata |>
+    filter(sample %in% ph$tip.label)
+  colours <- split(m$sample, m[[colour_var]])
+  shapes <- split(m$sample, m[[shape_var]])
+
+  phg <- ph |>
+    ggtree::groupOTU(colours, group_name = "colour") |>
+    ggtree::groupOTU(shapes, group_name = "shape")
   
-  d <- cor(tab, use = "complete.obs") |> 
+  env$m <- m
+  env$phg <- phg
+  with(env, {
+    ggtree::ggtree(phg, aes(colour = colour, shape = factor(shape, levels = levels(m[[shape_var]]))), layout = "daylight", branch.length = "branch.length") +
+      theme(legend.position = "bottom") +
+      ggtree::geom_tippoint() +
+      scale_colour_manual(values = okabe_ito_palette) +
+      scale_shape_manual(values = c(15:18, 0, 1, 2, 5, 6), na.value = 4, name = shape_var) +
+      labs(colour = colour_var, shape = shape_var) +
+      guides(colour = guide_legend(nrow = 4), shape = guide_legend(nrow = 4))
+  })
+
+}
+
+
+
+plot_distance_matrix <- function(set, what = "rlog", text_size = 10, skip_selection = FALSE) {
+  env <- new.env(parent = globalenv())
+  env$text_size <- text_size
+
+  #dat <- select_good_data(set, skip_selection)
+  dat <- set$dat
+  tab <- dat2mat(dat, value_col = what)
+
+  env$d <- cor(tab, use = "complete.obs") |>
     as_tibble(rownames = "sample") |>
-    pivot_longer(-sample) |> 
-    mutate(sample = factor(sample, levels = set$metadata$sample)) |> 
+    pivot_longer(-sample) |>
+    mutate(sample = factor(sample, levels = set$metadata$sample)) |>
     mutate(name = factor(name, levels = set$metadata$sample))
-  
-  rm(set, tab)
-  ggplot(d, aes(x = sample, y = name)) +
-    geom_tile(aes(fill = value)) +
-    scale_fill_viridis_c(option = "cividis") +
-    theme(
-      axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = text_size),
-      axis.text.y = element_text(size = text_size)
-    ) +
-    labs(x = NULL, y = NULL, fill = "Correlation")
+
+  with(env, {
+    ggplot(d, aes(x = sample, y = name)) +
+      geom_tile(aes(fill = value)) +
+      scale_fill_viridis_c(option = "cividis") +
+      theme(
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = text_size),
+        axis.text.y = element_text(size = text_size),
+        legend.position = "top"
+      ) +
+      labs(x = NULL, y = NULL, fill = "Correlation")
+  })
 }
+
+plot_median_correlation <- function(set, what = "rlog", colour_var = "group", shape_var = "group",
+                                  text_size = 10, skip_selection = FALSE) {
+  env <- new.env(parent = globalenv())
+  env$text_size <- text_size
+  env$colour_var <- colour_var
+  env$shape_var <- shape_var
+
+  #dat <- select_good_data(set, skip_selection)
+  dat <- set$dat
+  tab <- dat2mat(dat, value_col = what)
+
+  env$d <- cor(tab, use = "complete.obs") |>
+    as_tibble(rownames = "sample") |>
+    pivot_longer(-sample) |>
+    filter(sample > name) |>
+    group_by(sample) |>
+    summarise(
+      M = median(value),
+      Q1 = quantile(value, 0.25),
+      Q2 = quantile(value, 0.75)
+    ) |>
+    left_join(set$metadata, by = "sample") |> 
+    mutate(
+      colour = get(colour_var),
+      shape = get(shape_var)
+    )
+
+  with(env, {
+    d |> 
+      ggplot(aes(x = fct_reorder(sample, M), y = M, colour = colour, shape = shape)) +
+      th +
+      geom_errorbar(aes(ymin = Q1, ymax = Q2), width = 0, colour = "grey70") +
+      geom_point() +
+      coord_flip() +
+      scale_color_manual(values = okabe_ito_palette, name = colour_var) +
+      scale_shape_manual(values = c(15:18, 0, 1, 2, 5, 6), na.value = 4, name = shape_var) +
+      labs(x = NULL, y = "Mean correlation")
+  })
+}
+
+
+
 
 
 plot_mean_var <- function(set, point_size = 0.5, what = "count_norm", group_var = "group") {
@@ -426,7 +541,7 @@ umap2xy <- function(um, meta) {
 }
 
 plot_pca <- function(set, point_size = 2, what = "rlog", colour_var = "group", shape_var = "day") {
-  tab <- dat2mat(set$dat, what)
+  tab <- dat2mat(set$dat, value_col = what)
   
   # remove rows with zero variance
   tab <- tab[apply(tab, 1, function(v) sum(is.na(v)) == 0), ]
@@ -445,7 +560,7 @@ plot_pca <- function(set, point_size = 2, what = "rlog", colour_var = "group", s
 plot_umap <- function(set, what = "rlog", point_size = 2, seed = 1,
                       n_neighbours = 15, min_dist = 0.01,
                       colour_var = "group", shape_var = "group") {
-  tab <- dat2mat(set$dat, what)
+  tab <- dat2mat(set$dat, value_col = what)
   
   set.seed(seed)
   tab <- tab[apply(tab, 1, function(v) sum(is.na(v)) == 0), ]
@@ -453,15 +568,6 @@ plot_umap <- function(set, what = "rlog", point_size = 2, seed = 1,
     umap2xy(set$metadata) |> 
     plot_xy(colour_var, shape_var, point_size)
 }
-
-
-
-
-
-
-
-
-
 
 
 plot_up_down <- function(res, groupvar = "contrast") {
@@ -480,12 +586,17 @@ plot_up_down <- function(res, groupvar = "contrast") {
     labs(x = NULL, y = "Num significant genes")
 }
 
-plot_pair_outliers <- function(set, pair, genes, amp = 2, tau = 3, label.size = 2.5, value = "count_norm") {
+plot_pair_outliers <- function(set, pair, genes, amp = 2, tau = 3, label.size = 2.5, value = "count_norm", sel = NULL) {
+  env <- new.env(parent = globalenv())
+  env$pair <- pair
+  env$label.size <- label.size
+  env$sel <- sel
+  
   efun <- function(x) {amp * exp(-x / tau)}
   genes <- genes |> 
     select(id, gene_symbol) |> 
     distinct()
-  d <- set$dat |>
+  env$d <- set$dat |>
     filter(!bad) |> 
     filter(sample %in% pair) |>
     mutate(val = !!sym(value)) |> 
@@ -495,19 +606,28 @@ plot_pair_outliers <- function(set, pair, genes, amp = 2, tau = 3, label.size = 
     mutate(x = v1 + v2, y = v2 - v1) |> 
     mutate(f = efun(x)) |> 
     select(id, x, y, f)
-  dsel <- d |> 
+  env$dsel <- env$d |> 
     filter(abs(y) > f) |> 
-    left_join(genes, by = "id") 
-  ggplot(d, aes(x = x, y = y)) +
-    theme_bw() +
-    theme(legend.position = "none") +
-    geom_point(alpha = 0.3, colour = "black", size = 0.5) +
-    geom_line(aes(y = f), colour = "grey90") +
-    geom_line(aes(y = -f), colour = "grey90") +
-    #geom_hex(bins = 300) +
-    scale_fill_viridis_c(option = "cividis", trans = "sqrt") +
-    labs(x = paste(pair[1], "+", y = pair[2]), y = paste(pair[2], "-", y = pair[1])) +
-    geom_text_repel(data = dsel, aes(label = gene_symbol), size = label.size, max.overlaps = 30)
+    left_join(genes, by = "id")
+
+  with(env, {
+    pl <- ggplot(d, aes(x = x, y = y)) +
+      theme_bw() +
+      theme(legend.position = "none") +
+      geom_point(alpha = 0.3, colour = "black", size = 0.5) +
+      geom_line(aes(y = f), colour = "grey90") +
+      geom_line(aes(y = -f), colour = "grey90") +
+      scale_fill_viridis_c(option = "cividis", trans = "sqrt") +
+      labs(x = paste(pair[1], "+", y = pair[2]), y = paste(pair[2], "-", y = pair[1])) +
+      geom_text_repel(data = dsel, aes(label = gene_symbol), size = label.size, max.overlaps = 30)
+    if(!is.null(sel)) {
+      dcol <- d |> 
+        filter(id %in% sel)
+      pl <- pl +
+        geom_point(data = dcol, colour = "red", size = 1)
+    }
+    pl
+  })  
 }
 
 plot_pair_outliers_rlog <- function(set, pair, gene_info, limit = 2, label.size = 2.5) {
@@ -725,7 +845,7 @@ plot_fc_comparison <- function(res, groupvar = "contrast") {
     
 }
 
-plot_fc_heatmap <- function(set, what = "rlog", min_n = 10, max_fc = 2,
+plot_fc_heatmap <- function(set, what = "rlog", min_n = 3, max_fc = 2,
                             id_sel = NULL, sample_sel = NULL, order_col = TRUE,
                             with_x_text = FALSE, with_y_text = FALSE) {
   d <- set$dat |> 
@@ -742,7 +862,7 @@ plot_fc_heatmap <- function(set, what = "rlog", min_n = 10, max_fc = 2,
       fc = val - mean(val)
     ) |> 
     filter(n > min_n)
-  tab <- dat2mat(d, "fc")
+  tab <- dat2mat(d, value_col = "fc")
   
   smpls <- set$metadata |> 
     filter(sample %in% colnames(tab)) |> 

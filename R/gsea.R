@@ -30,18 +30,19 @@ fgsea_run <- function(term_data, res, min_size = 3, n_perm = 1000) {
 #' @param fterms A list of `fenr_terms` objects containing feature terms for various ontologies.
 #' @param filt An expression used to filter the DE results. Default is "TRUE".
 #' @param feature_var Column name in `de` containing feature IDs. Default is "id".
-#' @param value_var Column name in `de` containing values. Default is "logFC".
+#' @param rank_expr An expression to create a rank variable. We suggest "logFC" (default)
+#'   or "-sign(logFC) * log10(PValue)".
 #' @param group_var Column name in `de` containing group information. Default is "contrast".
 #' @param min_size Minimum size of a term for fgsea analysis. Default is 3.
 #' @param n_perm Number of permutations for fgsea analysis. Default is 1000.
 #'
 #' @return A named list of tibbles with fgsea results for each ontology.
-fgsea_all_terms <- function(de, fterms, filt = "TRUE", feature_var = "id", value_var = "logFC",
+fgsea_all_terms <- function(de, fterms, filt = "TRUE", feature_var = "id", rank_expr = "logFC",
                             group_var = "contrast", min_size = 3, n_perm = 1000) {
   ontologies <- names(fterms)
   de <- de |> 
     mutate(
-      value = get(value_var),
+      value = !!rlang::parse_expr(rank_expr),
       feature_id = get(feature_var)
     ) |> 
     filter(!!rlang::parse_expr(filt))

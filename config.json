@@ -13,6 +13,7 @@
     "qc" : "qc" 
   },
   "sample_file" : "config/samples.txt",
+  "window_size" : 1000,
   "logfc_limit" : 1,
   "fdr_limit" : 0.01
 }

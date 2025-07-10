@@ -155,7 +155,7 @@ tar_read(fig_ribo_prop)
 
 ## FastQ screen
 
-[FastQ screen](https://www.bioinformatics.babraham.ac.uk/projects/fastq_screen/) was used to map a sample of reads to several genomes to check for contamination. @fig-fscreen shows one hit one genome percentage. Note, the fill scale is logarithmic with grey indicating zero. There is no notable contamination from other organisms. `mut_5` has only about 35% of unique hits to *B. subtilis* genome, the low number being the result of ribosomal contamination. 
+[FastQ screen](https://www.bioinformatics.babraham.ac.uk/projects/fastq_screen/) was used to map a sample of reads to several genomes to check for contamination. @fig-fscreen shows one hit one genome percentage. Note, the fill scale is logarithmic with grey indicating zero. There is no notable contamination from other organisms. As you can see in the figure `mut_5` has only about 35% of unique hits to *B. subtilis* genome--the low number is the result of ribosomal contamination (FastQ screen has been run on unfiltered reads, still containing ribosomal sequences).
 
 
 ```{r}
@@ -258,6 +258,8 @@ The full quality control report, collated by MultiQC, is available [here](https:
 
 # Read count properties
 
+## Expression distribution
+
 @fig-sample-dist shows read count distribution.
 
 ```{r}
@@ -266,19 +268,70 @@ The full quality control report, collated by MultiQC, is available [here](https:
 knitr::include_graphics("../fig/sample_quasirandom.png") 
 ```
 
+## Expression across the chromosome
+
+```{r}
+#| label: fig-bedgraph-chrom
+#| fig-cap: Read pileup across chromosome NZ_CP020102.1 for all samples, in 1000-bp bins.
+#| fig-width: 8
+#| fig-height: 12
+tar_read(fig_bedgraphs)
+```
+
+## PCA, clustering and correlation
+
 Next figures are based on [regularised logarithm](https://rdrr.io/bioc/DESeq2/man/rlog.html) (rlog) of raw count data. @fig-properties shows Pearson's correlation coefficient between each pair of samples, PCA results and hierarchical clustering.
 
 ```{r}
 #| label: fig-properties
 #| fig-cap: A. Correlation matrix. B. PCA of rlog-transformed counts. C. Hierarchical clustering of samples based on rlog-transformed counts and correlation distance.
 #| fig-width: 8
-#| fig-height: 6
+#| fig-height: 8
 g1 <- tar_read(fig_distance_mat)
-g2 <- tar_read(fig_pca)
+g2 <- tar_read(fig_pca) + theme(legend.position = "none")
 g3 <- tar_read(fig_clustering) 
-cowplot::plot_grid(g1, g2, g3, nrow = 2, labels = c("A", "B", "C"))
+cowplot::plot_grid(g1, g2, g3, nrow = 2, labels = c("A", "B", "C"), rel_heights = c(1, 0.8))
 ```
 
+# Bad sample
+
+Sample `mut_5` shows strong ribosomal contamination. @fig-bad-sample shows a comparison of this sample with `mut_1`, which does not show strong contamination. @fig-good-sample shows two good samples for context. We see that apart from slightly increased noise, the main difference is in the expression of rRNA genes.
+
+```{r}
+#| label: fig-bad-sample
+#| fig-cap: Comparison between a "good" sample `mut_1` and a "bad" sample `mut_5`. `mut_1` and `mut_5` in the plot are log~10~(normalised_count + 1). The plot shows the difference versus sum of these logarithms. It is a MA plot. The grey lines indicate arbitrary exponential decay lines, used to mark outstanding genes. Red dots indicate ribosomal RNA genes.
+#| fig-width: 4
+#| fig-height: 4
+tar_read(fig_mut_1_5)
+```
+
+```{r}
+#| label: fig-good-sample
+#| fig-cap: As in @fig-bad-sample, but comparing two "good" samples.
+#| fig-width: 4
+#| fig-height: 4
+tar_read(fig_mut_1_2)
+```
+
+
+# Differential expression
+
+Only genes with at least 10 reads in at least one sample are used for differential expression. *edgeR* was used for differential expression between mutant and control.
+
+## Statistically significant genes
+
+The p-values were adjusted for multiple tests using a Benjamini-Hochberg approach, creating a corresponding false discovery rates (FDR). The significant genes are defined as FDR < `r config$fdr_limit` and |logFC| > `r config$logfc_limit`.
+
+## Results 
+
+```{r}
+#| label: fig-de-results
+#| fig-cap: "Results from the differential expression analysis. Left: volcano plot, right: MA plot. Black points indicate significant genes."
+#| fig-width: 8
+#| fig-height: 4
+tar_load(figs_de)
+cowplot::plot_grid(figs_de$volcano, figs_de$ma)
+```
 
 
 # Resources {#sec-resources}

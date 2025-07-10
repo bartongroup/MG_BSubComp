@@ -147,7 +147,7 @@ parse_star_counts <- function(path, meta, column = 2, suffix = ".txt", fix_names
     select(id, sample, count) |> 
     mutate(sample = factor(sample, levels = meta$sample))
   tab <- dat |> 
-    dat2mat(what = "count", id_col = "id", sample_var = "sample")
+    dat2mat(value_col = "count", id_col = "id", name_col = "sample")
   list(dat = dat, tab = tab, metadata = meta, sel = rownames(tab))
 }
 
@@ -769,10 +769,10 @@ save_count_data <- function(set, clock_genes, file, what = "count_norm") {
     write_tsv(file)
 }
 
-dat2mat <- function(dat, what = "count", id_col = "id", sample_var = "sample") {
-  dat |> 
-    pivot_wider(id_cols = !!id_col, names_from = !!sample_var, values_from = !!what) |> 
-    column_to_rownames(id_col) |> 
+dat2mat <- function(dat, id_col = "id", value_col = "abu_norm", name_col = "sample") {
+  dat |>
+    pivot_wider(id_cols = !!id_col, names_from = !!name_col, values_from = !!value_col) |>
+    column_to_rownames(id_col) |>
     as.matrix()
 }
 
@@ -900,4 +900,31 @@ write_counts <- function(set, file, what = "count_norm") {
     relocate(gene_symbol, .after = 1) |> 
     mutate(across(where(is.numeric), ~signif(.x, 4))) |> 
     write_csv(file)
+}
+
+
+group_counts_operons <- function(set, operons, min_count = 10) {
+  dat <- set$genes |> 
+    left_join(operons, by = "gene_symbol", relationship = "many-to-many") |> 
+    filter(!is.na(operon_id)) |> 
+    select(id, operon) |> 
+    left_join(set$dat, by = "id", relationship = "many-to-many") |> 
+    group_by(operon, sample) |>
+    summarise(count = sum(count))  |> 
+    ungroup() |> 
+    rename(id = operon)
+  genes <- dat |> 
+    select(id) |> 
+    distinct() |> 
+    mutate(gene_symbol = id)
+
+  list(
+    metadata = set$metadata,
+    genes = genes,
+    dat = dat,
+    tab = dat2mat(dat, id_col = "id", value_col = "count"),
+    star_log = set$star_log
+  ) |> 
+    normalize_star_counts(genes) |> 
+    filter_star_min_count(min_count)
 }

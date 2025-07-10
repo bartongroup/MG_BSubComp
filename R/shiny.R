@@ -1,0 +1,40 @@
+write_shiny_file <- function(obj, method = c("qs", "rds")) {
+  method <- match.arg(method)
+  path <- file.path("shiny", "data")
+  if (!dir.exists(path)) dir.create(path)
+  obj_name <- deparse(substitute(obj))
+  cat(paste("  Writing", obj_name))
+  if(method == "qs") {
+    file_name <- file.path(path, str_glue("{obj_name}.qs"))
+    qs2::qs_save(obj, file_name)
+  } else if(method == "rds") {
+    file_name <- file.path(path, str_glue("{obj_name}.rds"))
+    write_rds(obj, file_name, compress = "xz")
+  }
+  cat("\n")
+}
+
+save_data_for_shiny <- function(set, de, fterms, gse, what = "count_norm") {
+
+  de <- de |>
+    select(id, log_fc = logFC, expr = logCPM, p_value = PValue, fdr = FDR, contrast)
+  data <- set$dat |>
+    #filter(!bad) |>
+    mutate(value = get(what)) |>
+    select(id, sample, value)
+  metadata <- set$metadata |>
+    filter(!bad) |>
+    select(-bad)
+
+  dexset <- dexdash::dexdash_set(de, data, metadata, "RNA-seq")
+
+  features <- set$genes |>
+    select(id, description, name = gene_symbol) |> 
+    distinct()
+
+  write_shiny_file(dexset)
+  write_shiny_file(features)
+  write_shiny_file(fterms)
+  write_shiny_file(gse)
+}
+
