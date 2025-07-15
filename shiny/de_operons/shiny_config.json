@@ -1,0 +1,12 @@
+{
+  "title" : "Bacillus subtilis",
+  "data_path" : "data",
+  "max_points" : 3000,
+  "file_names" : {
+    "dexset": "dexset.qs",
+    "features": "features.qs",
+    "terms" : "terms.qs",
+    "fterms": "fterms.qs",
+    "gse" : "gse.qs"
+  }
+}

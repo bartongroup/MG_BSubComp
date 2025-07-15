@@ -11,10 +11,10 @@ targets_main <- function() {
 
   get_annotations = tar_plan(
     gtf = rtracklayer::import(yaml$gtf_url),
-    operons = get_operons(),
     genes = get_gene_annotations_from_gtf(gtf),
     chromosomes = genes$chr |> unique() |> as.character(),
-    terms = get_functional_terms(gtf),
+    operons = get_operons(genes),
+    terms = get_functional_terms(gtf, kg_spec = "bsu"),
     fterms = prepare_terms_fenr(terms, genes$id)
   )
 
@@ -54,20 +54,36 @@ targets_main <- function() {
   
   diff_expr <- tar_plan(
     my_contrasts = c("mut-ctrl"),
-    de = edger_de_contrasts(star, contrasts = my_contrasts),  
+    de = edger_de_contrasts(star, contrasts = my_contrasts),
+    de_genes = de |> dplyr::filter(FDR < config$fdr_limit & abs(logFC) >= config$logfc_limit) |> select(id, gene_symbol),
+
     figs_de = plot_vmp(de, fdr_limit = config$fdr_limit, logfc_limit = config$logfc_limit),
     gse = fgsea_all_terms(de, fterms, rank_expr = "-logFC * log10(PValue)"),
 
     der = edger_de_contrasts(star, contrasts = my_contrasts, filt = 'sample != "mut_5"'),  
     figs_der = plot_vmp(der, fdr_limit = config$fdr_limit, logfc_limit = config$logfc_limit),
-    gser = fgsea_all_terms(der, fterms, rank_expr = "-logFC * log10(PValue)")
+    gser = fgsea_all_terms(der, fterms, rank_expr = "-logFC * log10(PValue)"),
+
+    top_sig = de |> dplyr::filter(id %in% de_genes$id) |> dplyr::arrange(PValue) |> head(50) |> dplyr::pull(id),
+    fig_top_sig_heatmap = plot_fc_heatmap(star, id_sel = top_sig, max_fc = NA, with_x_text = TRUE, with_y_text = TRUE)
   )
 
   group_operons <- tar_plan(
-    ops = group_counts_operons(star, operons),
+    star_ops = group_counts_operons(star, operons),
+    terms_ops = group_terms_operons(terms, operons),
+    fterms_ops = prepare_terms_fenr(terms_ops, star_ops$genes$id),
 
-    deo = edger_de_contrasts(ops, contrasts = my_contrasts),  
-    figs_deo = plot_vmp(deo, fdr_limit = config$fdr_limit, logfc_limit = config$logfc_limit),
+    de_ops = edger_de_contrasts(star_ops, contrasts = my_contrasts),  
+    de_operons = de_ops |> dplyr::filter(FDR < config$fdr_limit & abs(logFC) >= config$logfc_limit) |> select(id, gene_symbol),
+
+    figs_de_ops = plot_vmp(de_ops, fdr_limit = config$fdr_limit, logfc_limit = config$logfc_limit),
+
+    cmp_genes_ops = compare_de_genes_operons(de, de_ops, "mut-ctrl", fdr_limit = config$fdr_limit, logfc_limit = config$logfc_limit),
+
+    gse_ops = fgsea_all_terms(de_ops, fterms_ops, rank_expr = "-logFC * log10(PValue)"),
+
+    top_sig_ops = de_ops |> dplyr::filter(id %in% de_operons$id) |> dplyr::arrange(PValue) |> head(50) |> dplyr::pull(id),
+    fig_top_sig_ops_heatmap = plot_fc_heatmap(star_ops, id_sel = top_sig_ops, max_fc = NA, with_x_text = TRUE, with_y_text = TRUE)
   )
 
   for_report <- tar_plan(
@@ -75,11 +91,27 @@ targets_main <- function() {
     fig_mut_1_5 = plot_pair_outliers(star, c("mut_1", "mut_5"), genes, amp = 2.5, tau = 4, sel = rrna_genes),
     fig_mut_1_2 = plot_pair_outliers(star, c("mut_1", "mut_2"), genes, amp = 2.5, tau = 4, sel = rrna_genes),
 
-    de_genes = de |> dplyr::filter(FDR < config$fdr_limit & abs(logFC) >= config$logfc_limit) |> select(id, gene_symbol)
+    tbl_gse = print_gse(gse, genes, fdr_limit = 0.05),
+    gse_example = list(ontology = "kg", term_id = "bsu02010", contrast = "mut-ctrl"),
+    gse_random = list(ontology = "kg", term_id = "bsu03010", contrast = "mut-ctrl"),
+    gse_example_stats = make_gse_example(de, terms, gse, gse_example),
+    gse_random_stats = make_gse_example(de, terms, gse, gse_random),
+    
+    fig_fg_example = plot_fgsea_enrichment(de, fterms, gse_example, rank_expr = "-logFC * log10(PValue)"),
+    fig_fg_example_random = plot_fgsea_enrichment(de, fterms, gse_random, rank_expr = "-logFC * log10(PValue)"),
+
+    sav_de = write_table(de),
+    sav_de_ops = write_table(de_ops),
+
+    gsea = print_gse(gse, star$genes, fdr_limit = 1),
+    gsea_ops = print_gse(gse_ops, star_ops$genes, fdr_limit = 1),
+    sav_gse = write_table(gsea),
+    sav_gse_ops = write_table(gsea_ops)
   )
 
   shiny <- tar_plan(
-    sav_shiny = save_data_for_shiny(star, de, fterms, gse)
+    sav_shiny_genes = save_data_for_shiny(star, de, fterms, gse, shiny_dir = "shiny/de_genes"),
+    sav_shiny_operons = save_data_for_shiny(star_ops, de_ops, fterms_ops, gse_ops, shiny_dir = "shiny/de_operons")
   )
 
   get_environment <- tar_plan(

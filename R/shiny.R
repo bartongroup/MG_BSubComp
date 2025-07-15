@@ -1,6 +1,6 @@
-write_shiny_file <- function(obj, method = c("qs", "rds")) {
+write_shiny_file <- function(obj, method = c("qs", "rds"), shiny_dir = "shiny") {
   method <- match.arg(method)
-  path <- file.path("shiny", "data")
+  path <- file.path(shiny_dir, "data")
   if (!dir.exists(path)) dir.create(path)
   obj_name <- deparse(substitute(obj))
   cat(paste("  Writing", obj_name))
@@ -14,7 +14,7 @@ write_shiny_file <- function(obj, method = c("qs", "rds")) {
   cat("\n")
 }
 
-save_data_for_shiny <- function(set, de, fterms, gse, what = "count_norm") {
+save_data_for_shiny <- function(set, de, fterms, gse, what = "count_norm", shiny_dir = "shiny") {
 
   de <- de |>
     select(id, log_fc = logFC, expr = logCPM, p_value = PValue, fdr = FDR, contrast)
@@ -24,7 +24,8 @@ save_data_for_shiny <- function(set, de, fterms, gse, what = "count_norm") {
     select(id, sample, value)
   metadata <- set$metadata |>
     filter(!bad) |>
-    select(-bad)
+    select(-bad) |> 
+    select(sample, replicate, group)
 
   dexset <- dexdash::dexdash_set(de, data, metadata, "RNA-seq")
 
@@ -32,9 +33,9 @@ save_data_for_shiny <- function(set, de, fterms, gse, what = "count_norm") {
     select(id, description, name = gene_symbol) |> 
     distinct()
 
-  write_shiny_file(dexset)
-  write_shiny_file(features)
-  write_shiny_file(fterms)
-  write_shiny_file(gse)
+  write_shiny_file(dexset, shiny_dir = shiny_dir)
+  write_shiny_file(features, shiny_dir = shiny_dir)
+  write_shiny_file(fterms, shiny_dir = shiny_dir)
+  write_shiny_file(gse, shiny_dir = shiny_dir)
 }
 

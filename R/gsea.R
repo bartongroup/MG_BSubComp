@@ -67,13 +67,16 @@ fgsea_all_terms <- function(de, fterms, filt = "TRUE", feature_var = "id", rank_
 #' @param de A dataframe containing DE results.
 #' @param fterms A list of feature terms.
 #' @param info A list containing contrast and ontology information.
-#' @param value_var Column name in `de` containing values. Default is "logFC".
+#' @param rank_expr An expression to create a rank variable. We suggest "logFC" (default)
+#'   or "-sign(logFC) * log10(PValue)".
 #'
 #' @return A ggplot object showing the fgsea enrichment plot.
-plot_fgsea_enrichment <- function(de, fterms, info, value_var = "logFC") {
-  de <- de |> filter(contrast == info$contrast)
+plot_fgsea_enrichment <- function(de, fterms, info, rank_expr = "logFC") {
+  de <- de |>
+    filter(contrast == info$contrast) |> 
+    mutate(value = !!rlang::parse_expr(rank_expr))
   lst <- as.list(fterms[[info$ontology]])$term2feature[[info$term_id]]
-  rnks <- set_names(de[[value_var]], de$id)
+  rnks <- set_names(de$value, de$id)
   fgsea::plotEnrichment(lst, rnks)
 }
 
@@ -239,4 +242,22 @@ write_gse <- function(gse, gene_info, file, n_top = 10, fdr_limit = 0.01) {
     arrange(nes) |> 
     mutate(across(where(is.numeric), ~signif(.x, 4))) |> 
     write_csv(file)
+}
+
+
+print_gse <- function(gse, gene_info, fdr_limit = 0.01) {
+  gene_info <- gene_info |> 
+    select(id, gene_symbol) |> 
+    distinct()
+
+  list_rbind(gse, names_to = "ontology") |> 
+    filter(fdr < fdr_limit) |> 
+    rename(id = leading_edge) |> 
+    unnest(id) |> 
+    left_join(gene_info, by = join_by(id)) |> 
+    select(-id) |> 
+    group_by(across(-gene_symbol)) |> 
+    summarise(leading_edge = str_c(gene_symbol, collapse = ", ")) |> 
+    arrange(nes) |> 
+    ungroup()
 }

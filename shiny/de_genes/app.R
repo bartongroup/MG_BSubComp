@@ -21,5 +21,5 @@ config <- jsonlite::read_json("shiny_config.json")
 shd <- sh_read_data(c("dexset", "features", "fterms"), config, with_progress = FALSE)
 
 dexdash::run_app(shd$dexset, shd$features, shd$fterms, title = config$title,
-                 x_variable = "group", colour_variable = "group")
+                 x_variable = "group", colour_variable = "replicate")
 

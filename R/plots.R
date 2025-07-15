@@ -227,7 +227,7 @@ plot_sample_quasirandom <- function(set, what = "count", colour_var = "treatment
     group_by(sample) |> 
     summarise(M = median(val)) |> 
     mutate(x = as.integer(sample))
-  w <- 0.3
+  colourw <- 0.3
   
   g <- df |> 
     ggplot() +
@@ -855,14 +855,19 @@ plot_fc_heatmap <- function(set, what = "rlog", min_n = 3, max_fc = 2,
   if (!is.null(id_sel))
     d <- d |> filter(id %in% id_sel)
   
+  g2n <- set$genes |> 
+    select(id, gene_symbol) |> 
+    mutate(ugene = make.unique(gene_symbol))
+  
   d <- d |> 
     group_by(id) |> 
     mutate(
       n = n(),
-      fc = val - mean(val)
+      fc = (val - mean(val)) / log10(2)
     ) |> 
-    filter(n > min_n)
-  tab <- dat2mat(d, value_col = "fc")
+    filter(n > min_n) |> 
+    left_join(g2n, by = "id")
+  tab <- dat2mat(d, value_col = "fc", id_col = "ugene")
   
   smpls <- set$metadata |> 
     filter(sample %in% colnames(tab)) |> 
@@ -1094,3 +1099,26 @@ plot_de_heatmap <- function(set, sites, what = "value_med", max.scale = NULL) {
     column_to_rownames("gid")
   ggheatmap(mat, legend.name = expression(log[2]~FC), with.y.text = TRUE, order.col = FALSE)
 }
+
+
+compare_de_genes_operons <- function(de, de_ops, ctr, fdr_limit = 0.01, logfc_limit = 1) {
+  de_genes <- de |> 
+    filter(contrast == ctr& FDR < fdr_limit & abs(logFC) >= logfc_limit) |> 
+    select(gene_symbol) |> 
+    distinct() |> 
+    add_column(de_gene = 1)
+  cmb <- de_ops |> 
+    filter(contrast == ctr& FDR < fdr_limit & abs(logFC) >= logfc_limit) |> 
+    select(de_operon = id, gene = gene_symbol) |> 
+    separate_longer_delim(gene, delim = "-") |> 
+    full_join(de_genes, by = c("gene" = "gene_symbol"))
+
+  cmb |> 
+    filter(!is.na(de_operon)) |> 
+    group_by(de_operon) |> 
+    summarise(
+      genes_in_de = str_c(gene[!is.na(de_gene)], collapse = ", "),
+      genes_not_in = str_c(gene[is.na(de_gene)], collapse = ", ")
+    )
+}
+

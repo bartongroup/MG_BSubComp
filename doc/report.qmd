@@ -36,6 +36,7 @@ suppressPackageStartupMessages({
   library(tidyr)
   library(purrr)
   library(forcats)
+  library(stringr)
   library(targets)
   library(gt)
   library(cowplot)
@@ -102,10 +103,7 @@ A full start-to-finish analysis for the RNAseq data. The reads will need checkin
  
 Any tools and output showing significantly up- or down-regulated genes in the comparison group, ideally with adjP < 0.05 and with a log2 fold change of 1. I'd love to see the various outputs eg volcano plots we can generate using your tool suite!
  
-For a first pass, a GO analysis would be helpful for painting a broad picture of the affected processes, after which we can hone in on interesting changes in operons and known regulatory pathways. I don't know offhand where the annotation gff file for the GO terms and gene names for each transcript is, however, and will get it from Nicola when she's back from annual leave.
-
-
-
+For a first pass, a GO analysis would be helpful for painting a broad picture of the affected processes, after which we can hone in on interesting changes in operons and known regulatory pathways.
 
 # Samples
 
@@ -113,15 +111,15 @@ There are two biological conditions (control and mutant), each in five replicate
 
 ```{r}
 #| label: tbl-metadata
-#| tbl-cap: Raw sample names (as in FASTQ file names) and simplified samples names used here.
+#| tbl-cap: Original sample names (as used in FASTQ file names) and simplified samples names used here.
 tar_read(metadata) |> 
-  select(raw_sample, sample, group, replicate) |> 
+  select(`Original sample` = raw_sample, Sample = sample, Group = group, Replicate = replicate) |> 
   gt() 
 ```
 
 # Data analysis
 
-The data analysis was conducted in two stages. The first stage was performed on the Life Sciences cluster using a Snakemake script. This stage included the cleaning, quality control, and mapping of FASTQ files. The software versions used in this stage are listed in @tbl-software. In the second stage, the data were imported into Positron and further processed using R. The versions of the R packages utilized are provided in @sec-session-info. All code used in this project is available on [GitHub](https://github.com/bartongroup/MG_BSubComp).
+The data analysis was conducted in two stages. The first stage was performed on the Life Sciences cluster using a Snakemake script. This stage included the cleaning, quality control, and mapping of FASTQ files. The software versions used in this stage are listed in @tbl-software. In the second stage, the data were imported into Positron and further processed using R on a MacBook Pro. The versions of the R packages utilized are provided in @sec-session-info. All code used in this project is available on [GitHub](https://github.com/bartongroup/MG_BSubComp).
 
 ```{r}
 #| label: tbl-software
@@ -143,7 +141,7 @@ Sequencing was carried out by Edinburgh Genetics. 2x100 bp paired-end stranded r
 
 ## Ribosomal RNA removal
 
-A tool [RiboDetector](https://github.com/hzi-bifo/RiboDetector) was used to remove reads matching ribosomal RNA from FASTQ files. RiboDetector is a machine learning tool that can recognize ribosomal RNA. @fig-ribo show no substantial ribosomal contamination in all samples except `mut_5`, where ~60% of reads are ribosomal.
+A tool [RiboDetector](https://github.com/hzi-bifo/RiboDetector) was used to remove reads matching ribosomal RNA from FASTQ files. RiboDetector is a machine learning tool that can recognize ribosomal RNA. @fig-ribo show no substantial ribosomal contamination in all samples except `mut_5`, where ~60% of reads are ribosomal. This is a potentially "bad" sample, its usability will be discussed below.
 
 ```{r}
 #| label: fig-ribo
@@ -186,20 +184,29 @@ tar_read(fig_read_qual)
 tar_read(fig_read_qual_clust)
 ```
 
+## Quality control report
 
+[The full MultiQC report](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/doc/multiqc.html).
 
 ## Genome and annotations
 
-Bacillus subtilis NCIB 3610 [genome assembly ASM205596v1](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_002055965.1/) has been downloaded from NCBI (genome sequence and GFF annotations). It consists of two sequences, CP020102.1 for the chromosome and CP020103.1 for the plasmid. The lengths of the chromosome and plasmid are 4,215,607 and 84,215 bp, respectively.
+Bacillus subtilis NCIB 3610 [genome assembly ASM205596v1](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_002055965.1/) has been downloaded from NCBI (genome sequence and GTF annotations). It consists of two sequences, with GeneBank locus ID CP020102.1 for the chromosome and CP020103.1 for the plasmid. The lengths of the chromosome and plasmid are 4,215,607 and 84,215 bp, respectively.
 
 ## Mapping
 
-[STAR](https://github.com/alexdobin/STAR) was used to map reads to the reference genome ASM205596v1 downloaded from NCBI. The following parameters were used:
+[STAR](https://github.com/alexdobin/STAR) was used to map reads to the reference genome ASM205596v1 downloaded from NCBI. The following parameters were used for creating the index:
 
-```         
---outFilterType BySJout 
---outSAMtype BAM SortedByCoordinate
+```
+ --sjdbGTFfeatureExon gene
+ --genomeSAindexNbases 10
+```
+
+and for mapping:
+
+```
 --sjdbGTFfeatureExon gene
+--outFilterType BySJout
+--outSAMtype BAM SortedByCoordinate
 --outFilterMultimapNmax 2
 --alignIntronMax 1
 --limitBAMsortRAM 3000000000
@@ -211,7 +218,7 @@ The `--alignIntronMax 1` option prohibits splicing (STAR is a splice-aware align
 
 ## Mapping properties
 
-@fig-star-log and @fig-map-count show mapping summaries.
+@fig-star-log and @fig-map-count show mapping summaries. The 'bad' sample `mut_5` has about the half of the read count of other samples, due to ribosomal contamination - these figures show results from clean data, after ribosomal sequences removal. However, the percentage of uniquely mapped reads remain high for all samples, including `mut_5`.
 
 ```{r}
 #| label: fig-star-log
@@ -246,7 +253,7 @@ We recommend instructing the sequencing centre to use a stranded protocol when s
 
 ```{r}
 #| label: fig-star-sense
-#| fig-cap: Distribution of log read count per STAR output file column. The second strand reads are dominant, so we read column 4.
+#| fig-cap: Distribution of log read count per STAR output file column. The first and second strand counts are similar, indicating unstranded data, so we read column 2.
 #| fig-width: 5
 #| fig-height: 3
 tar_read(fig_star_sense)
@@ -258,13 +265,15 @@ The full quality control report, collated by MultiQC, is available [here](https:
 
 # Read count properties
 
+This section contains general properties of mapped read counts.
+
 ## Expression distribution
 
-@fig-sample-dist shows read count distribution.
+@fig-sample-dist shows raw read count distribution.
 
 ```{r}
 #| label: fig-sample-dist
-#| fig-cap: Distribution of regularised log-count per sample.
+#| fig-cap: Distribution of raw read counts per sample, before any normalisation or transformation. Black horizontal lines show the median of each sample.
 knitr::include_graphics("../fig/sample_quasirandom.png") 
 ```
 
@@ -293,9 +302,9 @@ g3 <- tar_read(fig_clustering)
 cowplot::plot_grid(g1, g2, g3, nrow = 2, labels = c("A", "B", "C"), rel_heights = c(1, 0.8))
 ```
 
-# Bad sample
+# 'Bad' sample {#sec-bad-sample}
 
-Sample `mut_5` shows strong ribosomal contamination. @fig-bad-sample shows a comparison of this sample with `mut_1`, which does not show strong contamination. @fig-good-sample shows two good samples for context. We see that apart from slightly increased noise, the main difference is in the expression of rRNA genes.
+Sample `mut_5` shows strong ribosomal contamination. @fig-bad-sample shows a comparison of this sample with `mut_1`, which does not show strong contamination. @fig-good-sample shows two good samples for context. Apart from slightly increased noise, the main difference is in the expression of rRNA genes. `mut_5` has been retained in downstream analysis.
 
 ```{r}
 #| label: fig-bad-sample
@@ -313,16 +322,41 @@ tar_read(fig_mut_1_5)
 tar_read(fig_mut_1_2)
 ```
 
+# Silenced genes
 
-# Differential expression
+@fig-rapa and @fig-coma show the read pileup from around *rapA* and *comA* loci. While *rapA* expression is strongly suppressed in the mutant, *comA* shows no reads (exactly zero count) from 3,252,894 to 1:3,253,365. I guess the *comA* mutant has this part of the genome missing.
 
-Only genes with at least 10 reads in at least one sample are used for differential expression. *edgeR* was used for differential expression between mutant and control.
+```{r, out.width="100%"}
+#| label: fig-rapa
+#| fig-cap: Genomic track with read pileup from around rapA gene. The upper and lower tracks show mut_1 and ctrl_2, respectively.
+knitr::include_graphics("images/igv_rapA.png")
+```
+
+```{r, out.width="100%"}
+#| label: fig-coma
+#| fig-cap: Genomic track with read pileup from around comA gene. The upper and lower tracks show mut_1 and ctrl_2, respectively.
+knitr::include_graphics("images/igv_comA.png")
+```
+
+
+# Differential expression {#sec-de}
+
+Only genes with at least 10 reads in at least one sample are used for differential expression. All samples were used. *edgeR* was used for differential expression between mutant and control.
 
 ## Statistically significant genes
 
+```{r}
+#| label: de-genes
+tar_load(c(de_genes, de_operons))
+```
+
 The p-values were adjusted for multiple tests using a Benjamini-Hochberg approach, creating a corresponding false discovery rates (FDR). The significant genes are defined as FDR < `r config$fdr_limit` and |logFC| > `r config$logfc_limit`.
 
+Please note that these results are not correct, as the multiple test corrections require tests to be independent. However, bacterial genes are clustered in operons, with strongly correlated expression. This will be (partially) addressed this in Section @sec-operons. Here, selecting only small FDR and large fold changes circumvents the independence issue to some extent.
+
 ## Results 
+
+`r nrow(de_genes)` genes were found as statistically significant, according to the rules outlined above. @fig-de-results shows the volcano and MA plots with the differential expression results. @fig-top-sig shows the top 50 (by p-value) DE genes as a heatmap.
 
 ```{r}
 #| label: fig-de-results
@@ -333,18 +367,169 @@ tar_load(figs_de)
 cowplot::plot_grid(figs_de$volcano, figs_de$ma)
 ```
 
+```{r}
+#| label: fig-top-sig
+#| fig-cap: Heatmap showing relative change between conditions (rlog expression minus mean) for the top 50 DE genes.
+#| fig-width: 6
+#| fig-height: 10
+tar_read(fig_top_sig_heatmap)
+```
+
+
+# Operons {#sec-operons}
+
+Genes in bacteria are arranged in operons, clusters of co-transcribed genes that share a single promoter and are expressed together as a polycistronic mRNA. Therefore, expression of genes from the same operon is highly correlated. This makes multiple test correction in differential gene expression flawed, is the Benjamini-Hochberg method requires independent tests.
+
+To circumvent this issue, genes were grouped into operon clusters, with raw count of each operon summed. The operon data were downloaded from [SubtiWiki](https://www.subtiwiki.uni-goettingen.de/v5/operons). This, however, does not solve the problem entirely, as the operon definitions are not unique. For example, gene *rpsA* belongs to six different operons, as listed in @tbl-rpsa-operons. The expression from these operons will be correlated.
+
+```{r}
+#| label: tbl-rpsa-operons
+#| tbl-cap: Operons to which *rpsA* is assigned in SubtiWiki.
+tar_read(operons) |> 
+  select(-id) |> 
+  dplyr::filter(gene_symbol == "rpsA") |> 
+  rename(Gene = gene_symbol, Operon = operon) |> 
+  gt()
+```
+
+## Results
+
+Keeping this in mind, differential expression was carried out on operon data, using the same approach as in @sec-de. `r nrow(de_operons)` operons were found as statistically significant.
+
+```{r}
+#| label: fig-deo-results
+#| fig-cap: "Results from the differential expression analysis on operons. Left: volcano plot, right: MA plot. Black points indicate significant genes."
+#| fig-width: 8
+#| fig-height: 4
+tar_load(figs_de_ops)
+cowplot::plot_grid(figs_de_ops$volcano, figs_de_ops$ma)
+```
+
+```{r}
+#| label: fig-top-sig-ops
+#| fig-cap: Heatmap showing relative change between conditions (rlog expression minus mean) for the top 50 DE operons.
+#| fig-width: 8
+#| fig-height: 10
+tar_read(fig_top_sig_ops_heatmap) 
+```
+
+
+```{r}
+n_ops_not_de_genes <- tar_read(cmp_genes_ops) |> 
+  filter(genes_in_de == "") |> 
+  nrow()
+```
+
+However, operon approach does not bring any new results. There are only `r n_ops_not_de_genes` differentially expressed operons that don't have at least one gene among the differentially expressed genes. In all cases this is due to the logFC limit, these operons have the |logFC| just above 1, while the corresponding genes have |logFC| just below one.
+
+# Functional enrichment
+
+## Data sources
+
+GFT file from NCBI which was used for read counting contains GO-term mapping. This is used in the interactive data explorer (see @sec-resources).
+
+KEGG database contains some functional mapping for *B. subtilis*, which is also used here.
+
+[WikiPathways](https://www.wikipathways.org/) is a nice resource, but it returns only 3 functional terms mapped to 14 genes for *B. subtilis*.
+
+*SubtiWiki* web site include pathways, but an attempt to download them using their API fails - it returns a successful, but empty response. I have enquired them about it - they responded saying it is not implemented yet.
+
+[BsubCYc](https://bsubcyc.org/) is an large online resource, but requires paid subscription.
+
+## Functional enrichment
+
+Functional enrichment is calculated for each selection of genes in the Shiny interactive explorer. See @sec-resources.
+
+## Gene set enrichment
+
+### Explanation
+
+
+```{r gse_stats}
+tar_load(gse_example_stats)
+tar_load(gse_random_stats) 
+```
+
+
+Gene Set Enrichment Analysis (GSEA) is a computational method that
+determines whether a predefined set of genes shows statistically
+significant, concordant differences between two biological states (e.g.,
+treatment vs control). This method is typically used in the analysis of
+genome-wide expression profiles.
+
+To simplify, let's say you have a list of all the genes in a genome,
+ranked from the most up-regulated to the most down-regulated in
+inhibitor compared to control. A gene set is a group of genes that share
+a common biological function. Here we use functional annotations from
+Gene Ontology and KEGG. A set is a group of genes annotated
+with the same functional term. GSEA asks if members of a particular gene
+set are randomly distributed throughout the ranked list or primarily
+found at the top or bottom of the list, indicating that they might be
+involved in the disease process.
+
+The enrichment score, ES, is calculated by walking down the ranked list
+of genes (ordered by $-\log FC \times \log P$) and increasing a
+running-sum statistic when we encounter a gene annotated with the term
+and decreasing it when we encounter genes not annotated with the term.
+The significance of ES is estimated by a permutation test. An example of a GSE plot for one functional term is shown in @fig-fg-example.
+
+```{r}
+#| label: fig-fg-example
+#| fig-cap: !expr str_glue("Example of gene set enrichment for a term {gse_example_stats$term_id}, *{gse_example_stats$term_name}*. The fold changes are taken from the differential expression result of {gse_example_stats$contrast} contrast. The horizontal axis contains {gse_example_stats$n_genes_used} genes used in differential expression ranked according to fold change, up-regulated genes to the left, down-reguleted to the right. Vertical lines indicate {gse_example_stats$n_genes_in_term} genes annotated with term {gse_example_stats$term_id}. They are distributed non-randomly throughout the ranked list, and are primarily found at the bottom of the list (negative log-fold-changes). The leading edge is a subset of annotated genes from the highest rank to the peak of the green curves, there are {gse_example_stats$n_leading_edge} such genes.")
+#| fig-width: 5
+#| fig-height: 5
+tar_read(fig_fg_example) 
+```
+
+The enrichment score is the extreme (positive or negative) value achieved by the green curve - represented by the dashed red line. @fig-fg-example shows that genes annotated with `r gse_example_stats$term_id` are not randomly distributed throughout the ranked list of genes, but they are concentrated towards the bottom of the ranked list (to the right in the figure), and are mostly (but not all of them) down-regulated.
+
+In contrast, @fig-fg-example-rand shows GSE for GO term `r gse_random_stats$term_id`, *`r gse_random_stats$term_name`*, where genes annotated with this term are distributed randomly throughout the ranked list. The enrichment score is small and the result is not statistically significant.
+
+```{r}
+#| label: fig-fg-example-rand
+#| fig-cap: !expr str_glue("Example of gene set enrichment for a GO term {gse_random_stats$term_id}, *{gse_random_stats$term_name}*. The fold changes are taken from the differential expression result of mutant vs control contrast. The genes annotated with this term are distributed randomly throughout the ranked list.")
+#| fig-width: 5
+#| fig-height: 5
+tar_read(fig_fg_example_random) 
+```
+
+The **leading edge** is the subset of genes that contribute most to the enrichment score. In the case shown in @fig-fg-example these are genes to the right of the extreme value of the green curve.
+
+### Results
+
+Only KEGG analysis returns statistically significant (FDR < 0.05) functional terms. They are listed in @tbl-gsea-kegg.
+
+
+```{r}
+#| label: tbl-gsea-kegg
+#| tbl-cap: Statistically significant (FDR < 0.05) functional terms/pathways from GSEA analysis, including GO-terms and KEGG pathways. Only a few KEGG pathways are statistically significant. NES is a normalised enrichment score. Negative value indicates the genes are downregulated between control and mutant.
+tar_read(tbl_gse) |> 
+  mutate(term_name = str_remove(term_name, "\\s\\-.+$")) |> 
+  select(`Term ID` = term_id, Name = term_name, FDR = fdr, NES = nes, `Leading edge` = leading_edge) |> 
+  gt() |> 
+  gt::fmt_number(
+    columns = FDR,
+    n_sigfig = 2
+  ) |> 
+  gt::fmt_number(
+    columns = NES,
+    n_sigfig = 3
+  )
+```
 
 # Resources {#sec-resources}
 
 ## Interactive data explorer {#sec-shiny-app}
 
--   [Differential
-    expression](https://shiny.compbio.dundee.ac.uk/mgierlinski/private/bsub_comp/de)
+- [Differential expression for genes](https://shiny.compbio.dundee.ac.uk/mgierlinski/private/bsub_comp/de_genes)
+- [Differential expression for operons](https://shiny.compbio.dundee.ac.uk/mgierlinski/private/bsub_comp/de_operons)
 
 ## Downloads
 
--   [Differential expression
-    results](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/tab/da.csv)
+- [Differential expression for genes](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/tab/de.csv)
+- [Differential expression for operons](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/tab/de_ops.csv)
+- [Gene set enrichment for genes](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/tab/gsea.csv)
+- [Gene set enrichment for operons](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/tab/gsea_ops.csv)
 
 ## Code
 

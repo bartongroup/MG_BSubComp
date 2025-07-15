@@ -32,7 +32,7 @@ get_gene_annotations_from_gtf <- function(gtf) {
     description = product
   )
 
-  left_join(genes, CDS)
+  left_join(genes, CDS, by = "id")
 }
 
 get_go_mapping_from_gtf <- function(gtf) {
@@ -59,8 +59,21 @@ get_go_mapping_from_gtf <- function(gtf) {
 get_functional_terms <- function(gtf, kg_spec) {
   cat("Loading GO term data\n")
   go <- get_go_mapping_from_gtf(gtf)
+  cat("Loading KEGG data\n")
+  kg <- fenr::fetch_kegg(species = kg_spec)
+
+  gns <- get_gene_annotations_from_gtf(gtf) |> 
+    select(id, gene_symbol) |>
+    distinct()
+
+  kg$mapping <- kg$mapping |> 
+    inner_join(gns, by = "gene_symbol", relationship = "many-to-many") |> 
+    select(id, term_id) |> 
+    distinct()
+
   terms = list(
-    go = go
+    go = go,
+    kg = kg
   )
 }
 
@@ -77,7 +90,7 @@ prepare_terms_fenr <- function(terms, all_features) {
 
 
 # Download operon clustering from SubtiWiki
-get_operons <- function() {
+get_operons <- function(genes) {
   url <- "https://subtiwiki.uni-goettingen.de/v5/api/operon/"
   req <- httr2::request(url)
   resp <- httr2::req_perform(req)
@@ -98,6 +111,31 @@ get_operons <- function() {
     group_by(operon_id) |> 
     summarise(operon = str_c(sort(gene_symbol), collapse = "-"))
 
+  id2name <- genes |> 
+    select(id, gene_symbol) |> 
+    distinct() |> 
+    drop_na()
   ops |> 
-    left_join(ops_names, by = "operon_id")
+    left_join(ops_names, by = "operon_id") |> 
+    left_join(id2name, by = "gene_symbol") |> 
+    select(id, gene_symbol, operon)
+}
+
+
+group_terms_operons <- function(terms, operons) {
+  ontologies <- names(terms)
+  map(ontologies, function(ont) {
+    trm <- terms[[ont]]
+
+    mapping <- trm$mapping |> 
+      left_join(operons, by = "id") |> 
+      select(-id) |> 
+      select(id = operon, term_id)
+
+    list(
+      terms = trm$terms,
+      mapping = mapping
+    )
+  }) |> 
+    set_names(ontologies)
 }

@@ -902,21 +902,32 @@ write_counts <- function(set, file, what = "count_norm") {
     write_csv(file)
 }
 
-
+# operons needs two columns: gene_symbol and operon. Count will be added for each operon.
 group_counts_operons <- function(set, operons, min_count = 10) {
-  dat <- set$genes |> 
-    left_join(operons, by = "gene_symbol", relationship = "many-to-many") |> 
-    filter(!is.na(operon_id)) |> 
+  g2d <- set$genes |> 
+    select(id, gene_description = description) |> 
+    drop_na() |> 
+    distinct()
+  ops <- operons |> 
+    left_join(g2d, by = "id") |> 
+    filter(!is.na(id)) |> 
+    group_by(operon) |> 
+    mutate(description = str_c(gene_description, collapse = "; ")) |> 
+    select(-gene_description) |> 
+    ungroup()
+  dat <- operons |> 
     select(id, operon) |> 
+    drop_na() |> 
     left_join(set$dat, by = "id", relationship = "many-to-many") |> 
     group_by(operon, sample) |>
     summarise(count = sum(count))  |> 
     ungroup() |> 
     rename(id = operon)
-  genes <- dat |> 
-    select(id) |> 
-    distinct() |> 
-    mutate(gene_symbol = id)
+  genes <- ops |> 
+    select(id = operon, description) |> 
+    filter(id %in% dat$id) |> 
+    mutate(gene_symbol = id, .after = "id") |> 
+    distinct()
 
   list(
     metadata = set$metadata,
