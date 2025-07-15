@@ -15,5 +15,6 @@ rna_seq/*
 !rna_seq/run_snake.sh
 !rna_seq/config
 !rna_seq/env.txt
-shiny/data/*
+shiny/de_genes/data
+shiny/de_operons/data
 fig/
