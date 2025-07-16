@@ -54,7 +54,3 @@ targets::tar_make()
 ```
 
 This will perform all calculations, generate data objects, figures, and tables (as [targets](https://books.ropensci.org/targets/) objects), and output CSV files in the `./tab` directory. An HTML report will be generated in the `./doc` directory.
-
----
-
-Let me know if you'd like it adapted for publication or external sharing.
