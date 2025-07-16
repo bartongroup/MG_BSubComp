@@ -139,3 +139,25 @@ group_terms_operons <- function(terms, operons) {
   }) |> 
     set_names(ontologies)
 }
+
+
+annotate_ncbi_plasmid <- function(genes, gff, anchor_gene = c("B4U62_RS22265" = "rapP"), len = 84215) {
+  g <- genes |> 
+    filter(chr == "NZ_CP020103.1")
+  f <- gff |> 
+    as_tibble() |> 
+    filter(type == "gene") |> 
+    select(start, Name)
+  s1 <- g |> 
+    filter(id == names(anchor_gene)) |> 
+    pull(start)
+  s2 <- f |> 
+    filter(Name == anchor_gene) |> 
+    pull(start)
+  dif <- s2 - s1
+  g |> 
+    mutate(s = start + dif) |> 
+    mutate(s = if_else(s > len, s - len, s))  |> 
+    left_join(f, by = c("s" = "start"))
+    
+}

@@ -100,8 +100,10 @@ targets_main <- function() {
     fig_fg_example = plot_fgsea_enrichment(de, fterms, gse_example, rank_expr = "-logFC * log10(PValue)"),
     fig_fg_example_random = plot_fgsea_enrichment(de, fterms, gse_random, rank_expr = "-logFC * log10(PValue)"),
 
-    sav_de = write_table(de),
-    sav_de_ops = write_table(de_ops),
+    dea = print_de(de, genes),
+    dea_ops = print_de(de_ops, genes),
+    sav_de = write_table(dea),
+    sav_de_ops = write_table(dea_ops),
 
     gsea = print_gse(gse, star$genes, fdr_limit = 1),
     gsea_ops = print_gse(gse_ops, star_ops$genes, fdr_limit = 1),

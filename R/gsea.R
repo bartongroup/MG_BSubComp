@@ -261,3 +261,10 @@ print_gse <- function(gse, gene_info, fdr_limit = 0.01) {
     arrange(nes) |> 
     ungroup()
 }
+
+
+print_de <- function(de, genes) {
+  de |>
+    select(-gene_symbol) |>
+    left_join(genes, by = "id")
+}

@@ -1,5 +1,5 @@
 ---
-title: "Transcriptomic changes in *ΔcomA* and *ΔrapA* mutants in *Bacillus subtilis*"
+title: "Transcriptomic changes in *ΔcomA* and *ΔrapP* mutants in *Bacillus subtilis*"
 author:
   - name: Marek Gierlinski
     affiliations: Data Analysis Group
@@ -324,18 +324,19 @@ tar_read(fig_mut_1_2)
 
 # Silenced genes
 
-@fig-rapa and @fig-coma show the read pileup from around *rapA* and *comA* loci. While *rapA* expression is strongly suppressed in the mutant, *comA* shows no reads (exactly zero count) from 3,252,894 to 1:3,253,365. I guess the *comA* mutant has this part of the genome missing.
+@fig-rapp and @fig-coma show the read pileup from around *rapP* and *comA* loci. *rapP* is annotated as B4U62_RS22265 and shows no reads from 29,723 to 30,707 on the plasmid. *comA* shows no reads from 3,252,894 to 3,253,365 on the chromosome. These regions have been excised from the genome in the mutant.
+
 
 ```{r, out.width="100%"}
-#| label: fig-rapa
-#| fig-cap: Genomic track with read pileup from around rapA gene. The upper and lower tracks show mut_1 and ctrl_2, respectively.
-knitr::include_graphics("images/igv_rapA.png")
+#| label: fig-rapp
+#| fig-cap: Genomic track with read pileup from around rapP gene, which is marked here as "unassigned transcript 4467". The upper and lower tracks show ctrl_1 and mut_1, respectively.
+knitr::include_graphics("images/igv_rapP.png") 
 ```
 
 ```{r, out.width="100%"}
 #| label: fig-coma
-#| fig-cap: Genomic track with read pileup from around comA gene. The upper and lower tracks show mut_1 and ctrl_2, respectively.
-knitr::include_graphics("images/igv_comA.png")
+#| fig-cap: Genomic track with read pileup from around comA gene. The upper and lower tracks show ctrl_1 and mut_1, respectively.
+knitr::include_graphics("images/igv_comA.png") 
 ```
 
 
@@ -526,8 +527,8 @@ tar_read(tbl_gse) |>
 
 ## Downloads
 
-- [Differential expression for genes](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/tab/de.csv)
-- [Differential expression for operons](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/tab/de_ops.csv)
+- [Differential expression for genes](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/tab/dea.csv)
+- [Differential expression for operons](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/tab/dea_ops.csv)
 - [Gene set enrichment for genes](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/tab/gsea.csv)
 - [Gene set enrichment for operons](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/tab/gsea_ops.csv)
 

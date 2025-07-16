@@ -227,7 +227,7 @@ plot_sample_quasirandom <- function(set, what = "count", colour_var = "treatment
     group_by(sample) |> 
     summarise(M = median(val)) |> 
     mutate(x = as.integer(sample))
-  colourw <- 0.3
+  w <- 0.3
   
   g <- df |> 
     ggplot() +
