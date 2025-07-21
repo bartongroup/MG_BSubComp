@@ -1,0 +1,211 @@
+##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
+##sequence-region KF365913.1 1 84215
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=535026
+KF365913.1	Genbank	region	1	84215	.	+	.	ID=KF365913.1:1..84215;Dbxref=taxon:535026;Is_circular=true;Name=pBS32;gbkey=Src;genome=plasmid;mol_type=genomic DNA;old-name=Bacillus subtilis subsp. subtilis NCIB 3610 %3D ATCC 6051;plasmid-name=pBS32;strain=NCIB 3610;sub-species=subtilis;type-material=type strain of Bacillus subtilis
+KF365913.1	Genbank	gene	1	864	.	+	.	ID=gene-repN;Name=repN;gbkey=Gene;gene=repN;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	1	864	.	+	0	ID=cds-AGQ21228.1;Parent=gene-repN;Dbxref=NCBI_GP:AGQ21228.1;Name=AGQ21228.1;gbkey=CDS;gene=repN;product=DNA topoisomerase;protein_id=AGQ21228.1;transl_table=11
+KF365913.1	Genbank	gene	978	2894	.	+	.	ID=gene-zpaA;Name=zpaA;gbkey=Gene;gene=zpaA;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	978	2894	.	+	0	ID=cds-AGQ21229.1;Parent=gene-zpaA;Dbxref=NCBI_GP:AGQ21229.1;Name=AGQ21229.1;gbkey=CDS;gene=zpaA;product=DNA gyrase/topoisomerase IV subunit B;protein_id=AGQ21229.1;transl_table=11
+KF365913.1	Genbank	gene	3015	5009	.	+	.	ID=gene-zpaB;Name=zpaB;gbkey=Gene;gene=zpaB;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	3015	5009	.	+	0	ID=cds-AGQ21230.1;Parent=gene-zpaB;Dbxref=NCBI_GP:AGQ21230.1;Name=AGQ21230.1;gbkey=CDS;gene=zpaB;product=DNA gyrase/topoisomerase IV subunit A;protein_id=AGQ21230.1;transl_table=11
+KF365913.1	Genbank	gene	5134	6030	.	+	.	ID=gene-zpaC;Name=zpaC;gbkey=Gene;gene=zpaC;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	5134	6030	.	+	0	ID=cds-AGQ21231.1;Parent=gene-zpaC;Dbxref=NCBI_GP:AGQ21231.1;Name=AGQ21231.1;gbkey=CDS;gene=zpaC;product=antirestriction protein;protein_id=AGQ21231.1;transl_table=11
+KF365913.1	Genbank	gene	6083	6376	.	+	.	ID=gene-zpaD;Name=zpaD;gbkey=Gene;gene=zpaD;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	6083	6376	.	+	0	ID=cds-AGQ21232.1;Parent=gene-zpaD;Dbxref=NCBI_GP:AGQ21232.1;Name=AGQ21232.1;gbkey=CDS;gene=zpaD;product=unknown;protein_id=AGQ21232.1;transl_table=11
+KF365913.1	Genbank	gene	6441	6662	.	+	.	ID=gene-zpaE;Name=zpaE;gbkey=Gene;gene=zpaE;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	6441	6662	.	+	0	ID=cds-AGQ21233.1;Parent=gene-zpaE;Dbxref=NCBI_GP:AGQ21233.1;Name=AGQ21233.1;gbkey=CDS;gene=zpaE;product=unknown;protein_id=AGQ21233.1;transl_table=11
+KF365913.1	Genbank	gene	6873	7331	.	+	.	ID=gene-zpaF;Name=zpaF;gbkey=Gene;gene=zpaF;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	6873	7331	.	+	0	ID=cds-AGQ21234.1;Parent=gene-zpaF;Dbxref=NCBI_GP:AGQ21234.1;Name=AGQ21234.1;gbkey=CDS;gene=zpaF;product=Rho N-terminal domain protein;protein_id=AGQ21234.1;transl_table=11
+KF365913.1	Genbank	gene	7321	7596	.	+	.	ID=gene-zpaG;Name=zpaG;gbkey=Gene;gene=zpaG;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	7321	7596	.	+	0	ID=cds-AGQ21235.1;Parent=gene-zpaG;Dbxref=NCBI_GP:AGQ21235.1;Name=AGQ21235.1;gbkey=CDS;gene=zpaG;product=unknown;protein_id=AGQ21235.1;transl_table=11
+KF365913.1	Genbank	gene	7858	8187	.	+	.	ID=gene-zpaH;Name=zpaH;gbkey=Gene;gene=zpaH;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	7858	8187	.	+	0	ID=cds-AGQ21236.1;Parent=gene-zpaH;Dbxref=NCBI_GP:AGQ21236.1;Name=AGQ21236.1;gbkey=CDS;gene=zpaH;product=PemK domain protein;protein_id=AGQ21236.1;transl_table=11
+KF365913.1	Genbank	gene	8288	8566	.	+	.	ID=gene-zpaI;Name=zpaI;gbkey=Gene;gene=zpaI;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	8288	8566	.	+	0	ID=cds-AGQ21237.1;Parent=gene-zpaI;Dbxref=NCBI_GP:AGQ21237.1;Name=AGQ21237.1;gbkey=CDS;gene=zpaI;product=unknown;protein_id=AGQ21237.1;transl_table=11
+KF365913.1	Genbank	gene	8624	9442	.	+	.	ID=gene-zpaJ;Name=zpaJ;gbkey=Gene;gene=zpaJ;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	8624	9442	.	+	0	ID=cds-AGQ21238.1;Parent=gene-zpaJ;Dbxref=NCBI_GP:AGQ21238.1;Name=AGQ21238.1;gbkey=CDS;gene=zpaJ;product=unknown;protein_id=AGQ21238.1;transl_table=11
+KF365913.1	Genbank	gene	9538	9717	.	-	.	ID=gene-zpaK;Name=zpaK;gbkey=Gene;gene=zpaK;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	9538	9717	.	-	0	ID=cds-AGQ21239.1;Parent=gene-zpaK;Dbxref=NCBI_GP:AGQ21239.1;Name=AGQ21239.1;gbkey=CDS;gene=zpaK;product=transposase;protein_id=AGQ21239.1;transl_table=11
+KF365913.1	Genbank	gene	9865	10488	.	-	.	ID=gene-zpaL;Name=zpaL;gbkey=Gene;gene=zpaL;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	9865	10488	.	-	0	ID=cds-AGQ21240.1;Parent=gene-zpaL;Dbxref=NCBI_GP:AGQ21240.1;Name=AGQ21240.1;gbkey=CDS;gene=zpaL;product=unknown;protein_id=AGQ21240.1;transl_table=11
+KF365913.1	Genbank	gene	10572	10745	.	+	.	ID=gene-zpaM;Name=zpaM;gbkey=Gene;gene=zpaM;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	10572	10745	.	+	0	ID=cds-AGQ21241.1;Parent=gene-zpaM;Dbxref=NCBI_GP:AGQ21241.1;Name=AGQ21241.1;gbkey=CDS;gene=zpaM;product=unknown;protein_id=AGQ21241.1;transl_table=11
+KF365913.1	Genbank	gene	10836	11252	.	-	.	ID=gene-zpaN;Name=zpaN;gbkey=Gene;gene=zpaN;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	10836	11252	.	-	0	ID=cds-AGQ21242.1;Parent=gene-zpaN;Dbxref=NCBI_GP:AGQ21242.1;Name=AGQ21242.1;gbkey=CDS;gene=zpaN;product=unknown;protein_id=AGQ21242.1;transl_table=11
+KF365913.1	Genbank	gene	11264	12883	.	-	.	ID=gene-zpaO;Name=zpaO;gbkey=Gene;gene=zpaO;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	11264	12883	.	-	0	ID=cds-AGQ21243.1;Parent=gene-zpaO;Dbxref=NCBI_GP:AGQ21243.1;Name=AGQ21243.1;gbkey=CDS;gene=zpaO;product=phage integrase;protein_id=AGQ21243.1;transl_table=11
+KF365913.1	Genbank	gene	12998	13975	.	-	.	ID=gene-zpaP;Name=zpaP;gbkey=Gene;gene=zpaP;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	12998	13975	.	-	0	ID=cds-AGQ21244.1;Parent=gene-zpaP;Dbxref=NCBI_GP:AGQ21244.1;Name=AGQ21244.1;gbkey=CDS;gene=zpaP;product=phage site-specific recombinase;protein_id=AGQ21244.1;transl_table=11
+KF365913.1	Genbank	gene	14083	15399	.	-	.	ID=gene-zpaQ;Name=zpaQ;gbkey=Gene;gene=zpaQ;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	14083	15399	.	-	0	ID=cds-AGQ21245.1;Parent=gene-zpaQ;Dbxref=NCBI_GP:AGQ21245.1;Name=AGQ21245.1;gbkey=CDS;gene=zpaQ;product=lysozyme M1;protein_id=AGQ21245.1;transl_table=11
+KF365913.1	Genbank	gene	15413	15709	.	-	.	ID=gene-zpaR;Name=zpaR;gbkey=Gene;gene=zpaR;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	15413	15709	.	-	0	ID=cds-AGQ21246.1;Parent=gene-zpaR;Dbxref=NCBI_GP:AGQ21246.1;Name=AGQ21246.1;gbkey=CDS;gene=zpaR;product=unknown;protein_id=AGQ21246.1;transl_table=11
+KF365913.1	Genbank	gene	15711	15980	.	-	.	ID=gene-zpaS;Name=zpaS;gbkey=Gene;gene=zpaS;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	15711	15980	.	-	0	ID=cds-AGQ21247.1;Parent=gene-zpaS;Dbxref=NCBI_GP:AGQ21247.1;Name=AGQ21247.1;gbkey=CDS;gene=zpaS;product=unknown;protein_id=AGQ21247.1;transl_table=11
+KF365913.1	Genbank	gene	16022	16228	.	-	.	ID=gene-zpaT;Name=zpaT;gbkey=Gene;gene=zpaT;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	16022	16228	.	-	0	ID=cds-AGQ21248.1;Parent=gene-zpaT;Dbxref=NCBI_GP:AGQ21248.1;Name=AGQ21248.1;gbkey=CDS;gene=zpaT;product=unknown;protein_id=AGQ21248.1;transl_table=11
+KF365913.1	Genbank	gene	16267	16746	.	-	.	ID=gene-zpaU;Name=zpaU;gbkey=Gene;gene=zpaU;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	16267	16746	.	-	0	ID=cds-AGQ21249.1;Parent=gene-zpaU;Dbxref=NCBI_GP:AGQ21249.1;Name=AGQ21249.1;gbkey=CDS;gene=zpaU;product=phage related protein;protein_id=AGQ21249.1;transl_table=11
+KF365913.1	Genbank	gene	16755	18422	.	-	.	ID=gene-zpaV;Name=zpaV;gbkey=Gene;gene=zpaV;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	16755	18422	.	-	0	ID=cds-AGQ21250.1;Parent=gene-zpaV;Dbxref=NCBI_GP:AGQ21250.1;Name=AGQ21250.1;gbkey=CDS;gene=zpaV;product=phage minor structural protein;protein_id=AGQ21250.1;transl_table=11
+KF365913.1	Genbank	gene	18440	18826	.	-	.	ID=gene-zpaW;Name=zpaW;gbkey=Gene;gene=zpaW;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	18440	18826	.	-	0	ID=cds-AGQ21251.1;Parent=gene-zpaW;Dbxref=NCBI_GP:AGQ21251.1;Name=AGQ21251.1;gbkey=CDS;gene=zpaW;product=putative phage tail protein;protein_id=AGQ21251.1;transl_table=11
+KF365913.1	Genbank	gene	18829	21159	.	-	.	ID=gene-zpaX;Name=zpaX;gbkey=Gene;gene=zpaX;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	18829	21159	.	-	0	ID=cds-AGQ21252.1;Parent=gene-zpaX;Dbxref=NCBI_GP:AGQ21252.1;Name=AGQ21252.1;gbkey=CDS;gene=zpaX;product=phage minor structural protein;protein_id=AGQ21252.1;transl_table=11
+KF365913.1	Genbank	gene	21175	22839	.	-	.	ID=gene-zpaY;Name=zpaY;gbkey=Gene;gene=zpaY;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	21175	22839	.	-	0	ID=cds-AGQ21253.1;Parent=gene-zpaY;Dbxref=NCBI_GP:AGQ21253.1;Name=AGQ21253.1;gbkey=CDS;gene=zpaY;product=putative phage tail protein;protein_id=AGQ21253.1;transl_table=11
+KF365913.1	Genbank	gene	22836	27920	.	-	.	ID=gene-zpaZ;Name=zpaZ;gbkey=Gene;gene=zpaZ;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	22836	27920	.	-	0	ID=cds-AGQ21254.1;Parent=gene-zpaZ;Dbxref=NCBI_GP:AGQ21254.1;Name=AGQ21254.1;gbkey=CDS;gene=zpaZ;product=phage tail tape measure protein;protein_id=AGQ21254.1;transl_table=11
+KF365913.1	Genbank	gene	28118	28444	.	-	.	ID=gene-zpbA;Name=zpbA;gbkey=Gene;gene=zpbA;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	28118	28444	.	-	0	ID=cds-AGQ21255.1;Parent=gene-zpbA;Dbxref=NCBI_GP:AGQ21255.1;Name=AGQ21255.1;gbkey=CDS;gene=zpbA;product=phage tail tape measure protein chaperone;protein_id=AGQ21255.1;transl_table=11
+KF365913.1	Genbank	gene	28522	29172	.	-	.	ID=gene-zpbB;Name=zpbB;gbkey=Gene;gene=zpbB;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	28522	29172	.	-	0	ID=cds-AGQ21256.1;Parent=gene-zpbB;Dbxref=NCBI_GP:AGQ21256.1;Name=AGQ21256.1;gbkey=CDS;gene=zpbB;product=phage major tail protein;protein_id=AGQ21256.1;transl_table=11
+KF365913.1	Genbank	gene	29203	29607	.	-	.	ID=gene-zpbC;Name=zpbC;gbkey=Gene;gene=zpbC;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	29203	29607	.	-	0	ID=cds-AGQ21257.1;Parent=gene-zpbC;Dbxref=NCBI_GP:AGQ21257.1;Name=AGQ21257.1;gbkey=CDS;gene=zpbC;product=unknown;protein_id=AGQ21257.1;transl_table=11
+KF365913.1	Genbank	gene	29604	29984	.	-	.	ID=gene-zpbD;Name=zpbD;gbkey=Gene;gene=zpbD;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	29604	29984	.	-	0	ID=cds-AGQ21258.1;Parent=gene-zpbD;Dbxref=NCBI_GP:AGQ21258.1;Name=AGQ21258.1;gbkey=CDS;gene=zpbD;product=phage protein HK97;protein_id=AGQ21258.1;transl_table=11
+KF365913.1	Genbank	gene	29984	30322	.	-	.	ID=gene-zpbE;Name=zpbE;gbkey=Gene;gene=zpbE;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	29984	30322	.	-	0	ID=cds-AGQ21259.1;Parent=gene-zpbE;Dbxref=NCBI_GP:AGQ21259.1;Name=AGQ21259.1;gbkey=CDS;gene=zpbE;product=phage head-tail adaptor protein;protein_id=AGQ21259.1;transl_table=11
+KF365913.1	Genbank	gene	30322	30654	.	-	.	ID=gene-zpbF;Name=zpbF;gbkey=Gene;gene=zpbF;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	30322	30654	.	-	0	ID=cds-AGQ21260.1;Parent=gene-zpbF;Dbxref=NCBI_GP:AGQ21260.1;Name=AGQ21260.1;gbkey=CDS;gene=zpbF;product=phage DNA packaging protein;protein_id=AGQ21260.1;transl_table=11
+KF365913.1	Genbank	gene	30644	30859	.	-	.	ID=gene-zpbG;Name=zpbG;gbkey=Gene;gene=zpbG;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	30644	30859	.	-	0	ID=cds-AGQ21261.1;Parent=gene-zpbG;Dbxref=NCBI_GP:AGQ21261.1;Name=AGQ21261.1;gbkey=CDS;gene=zpbG;product=unknown;protein_id=AGQ21261.1;transl_table=11
+KF365913.1	Genbank	gene	30961	32109	.	-	.	ID=gene-zpbH;Name=zpbH;gbkey=Gene;gene=zpbH;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	30961	32109	.	-	0	ID=cds-AGQ21262.1;Parent=gene-zpbH;Dbxref=NCBI_GP:AGQ21262.1;Name=AGQ21262.1;gbkey=CDS;gene=zpbH;product=phage major capsid protein;protein_id=AGQ21262.1;transl_table=11
+KF365913.1	Genbank	gene	32130	33071	.	-	.	ID=gene-zpbI;Name=zpbI;gbkey=Gene;gene=zpbI;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	32130	33071	.	-	0	ID=cds-AGQ21263.1;Parent=gene-zpbI;Dbxref=NCBI_GP:AGQ21263.1;Name=AGQ21263.1;Note=protease domain;gbkey=CDS;gene=zpbI;product=phage major capsid protein;protein_id=AGQ21263.1;transl_table=11
+KF365913.1	Genbank	gene	33113	34492	.	-	.	ID=gene-zpbJ;Name=zpbJ;gbkey=Gene;gene=zpbJ;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	33113	34492	.	-	0	ID=cds-AGQ21264.1;Parent=gene-zpbJ;Dbxref=NCBI_GP:AGQ21264.1;Name=AGQ21264.1;gbkey=CDS;gene=zpbJ;product=phage portal protein;protein_id=AGQ21264.1;transl_table=11
+KF365913.1	Genbank	gene	34515	36305	.	-	.	ID=gene-zpbK;Name=zpbK;gbkey=Gene;gene=zpbK;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	34515	36305	.	-	0	ID=cds-AGQ21265.1;Parent=gene-zpbK;Dbxref=NCBI_GP:AGQ21265.1;Name=AGQ21265.1;gbkey=CDS;gene=zpbK;product=phage terminase large subunit;protein_id=AGQ21265.1;transl_table=11
+KF365913.1	Genbank	gene	36449	36940	.	-	.	ID=gene-zpbL;Name=zpbL;gbkey=Gene;gene=zpbL;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	36449	36940	.	-	0	ID=cds-AGQ21266.1;Parent=gene-zpbL;Dbxref=NCBI_GP:AGQ21266.1;Name=AGQ21266.1;gbkey=CDS;gene=zpbL;product=phage terminase small subunit;protein_id=AGQ21266.1;transl_table=11
+KF365913.1	Genbank	gene	36952	37359	.	-	.	ID=gene-zpbM;Name=zpbM;gbkey=Gene;gene=zpbM;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	36952	37359	.	-	0	ID=cds-AGQ21267.1;Parent=gene-zpbM;Dbxref=NCBI_GP:AGQ21267.1;Name=AGQ21267.1;gbkey=CDS;gene=zpbM;product=HNH restriction endonuclease domain protein;protein_id=AGQ21267.1;transl_table=11
+KF365913.1	Genbank	gene	37726	38046	.	+	.	ID=gene-zpbN;Name=zpbN;gbkey=Gene;gene=zpbN;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	37726	38046	.	+	0	ID=cds-AGQ21268.1;Parent=gene-zpbN;Dbxref=NCBI_GP:AGQ21268.1;Name=AGQ21268.1;gbkey=CDS;gene=zpbN;product=unknown;protein_id=AGQ21268.1;transl_table=11
+KF365913.1	Genbank	gene	38196	39359	.	+	.	ID=gene-rapP;Name=rapP;gbkey=Gene;gene=rapP;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	38196	39359	.	+	0	ID=cds-AGM61727.1;Parent=gene-rapP;Dbxref=NCBI_GP:AGM61727.1;Name=AGM61727.1;gbkey=CDS;gene=rapP;product=Rap phosphatase;protein_id=AGM61727.1;transl_table=11
+KF365913.1	Genbank	gene	39346	39468	.	+	.	ID=gene-phrP;Name=phrP;gbkey=Gene;gene=phrP;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	39346	39468	.	+	0	ID=cds-AGM61728.1;Parent=gene-phrP;Dbxref=NCBI_GP:AGM61728.1;Name=AGM61728.1;gbkey=CDS;gene=phrP;product=Phr peptide;protein_id=AGM61728.1;transl_table=11
+KF365913.1	Genbank	gene	39511	40350	.	-	.	ID=gene-zpbO;Name=zpbO;gbkey=Gene;gene=zpbO;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	39511	40350	.	-	0	ID=cds-AGQ21269.1;Parent=gene-zpbO;Dbxref=NCBI_GP:AGQ21269.1;Name=AGQ21269.1;gbkey=CDS;gene=zpbO;product=unknown;protein_id=AGQ21269.1;transl_table=11
+KF365913.1	Genbank	gene	40481	40792	.	+	.	ID=gene-zpbP;Name=zpbP;gbkey=Gene;gene=zpbP;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	40481	40792	.	+	0	ID=cds-AGQ21270.1;Parent=gene-zpbP;Dbxref=NCBI_GP:AGQ21270.1;Name=AGQ21270.1;gbkey=CDS;gene=zpbP;product=unknown;protein_id=AGQ21270.1;transl_table=11
+KF365913.1	Genbank	gene	41301	41600	.	+	.	ID=gene-zpbQ;Name=zpbQ;gbkey=Gene;gene=zpbQ;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	41301	41600	.	+	0	ID=cds-AGQ21271.1;Parent=gene-zpbQ;Dbxref=NCBI_GP:AGQ21271.1;Name=AGQ21271.1;gbkey=CDS;gene=zpbQ;product=unknown;protein_id=AGQ21271.1;transl_table=11
+KF365913.1	Genbank	gene	41730	43010	.	+	.	ID=gene-zpbR;Name=zpbR;gbkey=Gene;gene=zpbR;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	41730	43010	.	+	0	ID=cds-AGQ21272.1;Parent=gene-zpbR;Dbxref=NCBI_GP:AGQ21272.1;Name=AGQ21272.1;gbkey=CDS;gene=zpbR;product=ATP-dependent DNA ligase;protein_id=AGQ21272.1;transl_table=11
+KF365913.1	Genbank	gene	43159	43680	.	+	.	ID=gene-zpbS;Name=zpbS;gbkey=Gene;gene=zpbS;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	43159	43680	.	+	0	ID=cds-AGQ21273.1;Parent=gene-zpbS;Dbxref=NCBI_GP:AGQ21273.1;Name=AGQ21273.1;gbkey=CDS;gene=zpbS;product=LysM domain protein;protein_id=AGQ21273.1;transl_table=11
+KF365913.1	Genbank	gene	43814	44056	.	-	.	ID=gene-zpbT;Name=zpbT;gbkey=Gene;gene=zpbT;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	43814	44056	.	-	0	ID=cds-AGQ21274.1;Parent=gene-zpbT;Dbxref=NCBI_GP:AGQ21274.1;Name=AGQ21274.1;gbkey=CDS;gene=zpbT;product=unknown;protein_id=AGQ21274.1;transl_table=11
+KF365913.1	Genbank	gene	44345	44680	.	-	.	ID=gene-zpbU;Name=zpbU;gbkey=Gene;gene=zpbU;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	44345	44680	.	-	0	ID=cds-AGQ21275.1;Parent=gene-zpbU;Dbxref=NCBI_GP:AGQ21275.1;Name=AGQ21275.1;gbkey=CDS;gene=zpbU;product=unknown;protein_id=AGQ21275.1;transl_table=11
+KF365913.1	Genbank	gene	44718	45281	.	-	.	ID=gene-zpbV;Name=zpbV;gbkey=Gene;gene=zpbV;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	44718	45281	.	-	0	ID=cds-AGQ21276.1;Parent=gene-zpbV;Dbxref=NCBI_GP:AGQ21276.1;Name=AGQ21276.1;gbkey=CDS;gene=zpbV;product=phage integrase;protein_id=AGQ21276.1;transl_table=11
+KF365913.1	Genbank	gene	45549	46583	.	+	.	ID=gene-zpbW;Name=zpbW;gbkey=Gene;gene=zpbW;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	45549	46583	.	+	0	ID=cds-AGQ21277.1;Parent=gene-zpbW;Dbxref=NCBI_GP:AGQ21277.1;Name=AGQ21277.1;gbkey=CDS;gene=zpbW;product=HTH DNA binding domain protein;protein_id=AGQ21277.1;transl_table=11
+KF365913.1	Genbank	gene	46640	47338	.	+	.	ID=gene-zpbX;Name=zpbX;gbkey=Gene;gene=zpbX;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	46640	47338	.	+	0	ID=cds-AGQ21278.1;Parent=gene-zpbX;Dbxref=NCBI_GP:AGQ21278.1;Name=AGQ21278.1;gbkey=CDS;gene=zpbX;product=unknown;protein_id=AGQ21278.1;transl_table=11
+KF365913.1	Genbank	gene	47368	47598	.	+	.	ID=gene-zpbY;Name=zpbY;gbkey=Gene;gene=zpbY;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	47368	47598	.	+	0	ID=cds-AGQ21279.1;Parent=gene-zpbY;Dbxref=NCBI_GP:AGQ21279.1;Name=AGQ21279.1;gbkey=CDS;gene=zpbY;product=unknown;protein_id=AGQ21279.1;transl_table=11
+KF365913.1	Genbank	gene	47610	48134	.	+	.	ID=gene-zpbZ;Name=zpbZ;gbkey=Gene;gene=zpbZ;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	47610	48134	.	+	0	ID=cds-AGQ21280.1;Parent=gene-zpbZ;Dbxref=NCBI_GP:AGQ21280.1;Name=AGQ21280.1;gbkey=CDS;gene=zpbZ;product=NTP phosphohydrolase domain protein;protein_id=AGQ21280.1;transl_table=11
+KF365913.1	Genbank	gene	48139	48717	.	+	.	ID=gene-zpcA;Name=zpcA;gbkey=Gene;gene=zpcA;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	48139	48717	.	+	0	ID=cds-AGQ21281.1;Parent=gene-zpcA;Dbxref=NCBI_GP:AGQ21281.1;Name=AGQ21281.1;gbkey=CDS;gene=zpcA;product=unknown;protein_id=AGQ21281.1;transl_table=11
+KF365913.1	Genbank	gene	48757	49533	.	+	.	ID=gene-zpcB;Name=zpcB;gbkey=Gene;gene=zpcB;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	48757	49533	.	+	0	ID=cds-AGQ21282.1;Parent=gene-zpcB;Dbxref=NCBI_GP:AGQ21282.1;Name=AGQ21282.1;gbkey=CDS;gene=zpcB;product=unknown;protein_id=AGQ21282.1;transl_table=11
+KF365913.1	Genbank	gene	49536	49865	.	+	.	ID=gene-zpcC;Name=zpcC;gbkey=Gene;gene=zpcC;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	49536	49865	.	+	0	ID=cds-AGQ21283.1;Parent=gene-zpcC;Dbxref=NCBI_GP:AGQ21283.1;Name=AGQ21283.1;gbkey=CDS;gene=zpcC;product=unknown;protein_id=AGQ21283.1;transl_table=11
+KF365913.1	Genbank	gene	50098	50352	.	+	.	ID=gene-zpcD;Name=zpcD;gbkey=Gene;gene=zpcD;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	50098	50352	.	+	0	ID=cds-AGQ21284.1;Parent=gene-zpcD;Dbxref=NCBI_GP:AGQ21284.1;Name=AGQ21284.1;gbkey=CDS;gene=zpcD;product=unknown;protein_id=AGQ21284.1;transl_table=11
+KF365913.1	Genbank	gene	50631	50840	.	+	.	ID=gene-zpcE;Name=zpcE;gbkey=Gene;gene=zpcE;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	50631	50840	.	+	0	ID=cds-AGQ21285.1;Parent=gene-zpcE;Dbxref=NCBI_GP:AGQ21285.1;Name=AGQ21285.1;gbkey=CDS;gene=zpcE;product=unknown;protein_id=AGQ21285.1;transl_table=11
+KF365913.1	Genbank	gene	50900	51865	.	+	.	ID=gene-zpcF;Name=zpcF;gbkey=Gene;gene=zpcF;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	50900	51865	.	+	0	ID=cds-AGQ21286.1;Parent=gene-zpcF;Dbxref=NCBI_GP:AGQ21286.1;Name=AGQ21286.1;gbkey=CDS;gene=zpcF;product=unknown;protein_id=AGQ21286.1;transl_table=11
+KF365913.1	Genbank	gene	51940	52461	.	+	.	ID=gene-zpcG;Name=zpcG;gbkey=Gene;gene=zpcG;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	51940	52461	.	+	0	ID=cds-AGQ21287.1;Parent=gene-zpcG;Dbxref=NCBI_GP:AGQ21287.1;Name=AGQ21287.1;gbkey=CDS;gene=zpcG;product=nucleoside 2-deoxyribosyltransferase;protein_id=AGQ21287.1;transl_table=11
+KF365913.1	Genbank	gene	52458	52820	.	+	.	ID=gene-zpcH;Name=zpcH;gbkey=Gene;gene=zpcH;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	52458	52820	.	+	0	ID=cds-AGQ21288.1;Parent=gene-zpcH;Dbxref=NCBI_GP:AGQ21288.1;Name=AGQ21288.1;gbkey=CDS;gene=zpcH;product=unknown;protein_id=AGQ21288.1;transl_table=11
+KF365913.1	Genbank	gene	52909	53148	.	+	.	ID=gene-zpcI;Name=zpcI;gbkey=Gene;gene=zpcI;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	52909	53148	.	+	0	ID=cds-AGQ21289.1;Parent=gene-zpcI;Dbxref=NCBI_GP:AGQ21289.1;Name=AGQ21289.1;gbkey=CDS;gene=zpcI;product=unknown;protein_id=AGQ21289.1;transl_table=11
+KF365913.1	Genbank	gene	53217	54251	.	+	.	ID=gene-zpcJ;Name=zpcJ;gbkey=Gene;gene=zpcJ;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	53217	54251	.	+	0	ID=cds-AGQ21290.1;Parent=gene-zpcJ;Dbxref=NCBI_GP:AGQ21290.1;Name=AGQ21290.1;Note=phage related;gbkey=CDS;gene=zpcJ;product=ATP/GTP binding protein;protein_id=AGQ21290.1;transl_table=11
+KF365913.1	Genbank	gene	54322	56691	.	+	.	ID=gene-zpcK;Name=zpcK;gbkey=Gene;gene=zpcK;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	54322	56691	.	+	0	ID=cds-AGQ21291.1;Parent=gene-zpcK;Dbxref=NCBI_GP:AGQ21291.1;Name=AGQ21291.1;gbkey=CDS;gene=zpcK;product=ribonucleoside-diphosphate reductase alpha subunit;protein_id=AGQ21291.1;transl_table=11
+KF365913.1	Genbank	gene	56795	57838	.	+	.	ID=gene-zpcL;Name=zpcL;gbkey=Gene;gene=zpcL;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	56795	57838	.	+	0	ID=cds-AGQ21292.1;Parent=gene-zpcL;Dbxref=NCBI_GP:AGQ21292.1;Name=AGQ21292.1;gbkey=CDS;gene=zpcL;product=ribonucleotide-diphosphate reductase beta subunit;protein_id=AGQ21292.1;transl_table=11
+KF365913.1	Genbank	gene	57840	58265	.	+	.	ID=gene-zpcM;Name=zpcM;gbkey=Gene;gene=zpcM;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	57840	58265	.	+	0	ID=cds-AGQ21293.1;Parent=gene-zpcM;Dbxref=NCBI_GP:AGQ21293.1;Name=AGQ21293.1;gbkey=CDS;gene=zpcM;product=Short chain flavodoxin;protein_id=AGQ21293.1;transl_table=11
+KF365913.1	Genbank	gene	58360	58515	.	+	.	ID=gene-zpcN;Name=zpcN;gbkey=Gene;gene=zpcN;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	58360	58515	.	+	0	ID=cds-AGQ21294.1;Parent=gene-zpcN;Dbxref=NCBI_GP:AGQ21294.1;Name=AGQ21294.1;gbkey=CDS;gene=zpcN;product=unknown;protein_id=AGQ21294.1;transl_table=11
+KF365913.1	Genbank	gene	58512	59018	.	+	.	ID=gene-zpcO;Name=zpcO;gbkey=Gene;gene=zpcO;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	58512	59018	.	+	0	ID=cds-AGQ21295.1;Parent=gene-zpcO;Dbxref=NCBI_GP:AGQ21295.1;Name=AGQ21295.1;gbkey=CDS;gene=zpcO;product=unknown;protein_id=AGQ21295.1;transl_table=11
+KF365913.1	Genbank	gene	59117	59503	.	+	.	ID=gene-zpcP;Name=zpcP;gbkey=Gene;gene=zpcP;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	59117	59503	.	+	0	ID=cds-AGQ21296.1;Parent=gene-zpcP;Dbxref=NCBI_GP:AGQ21296.1;Name=AGQ21296.1;gbkey=CDS;gene=zpcP;product=unknown;protein_id=AGQ21296.1;transl_table=11
+KF365913.1	Genbank	gene	59749	60801	.	+	.	ID=gene-zpcQ;Name=zpcQ;gbkey=Gene;gene=zpcQ;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	59749	60801	.	+	0	ID=cds-AGQ21297.1;Parent=gene-zpcQ;Dbxref=NCBI_GP:AGQ21297.1;Name=AGQ21297.1;gbkey=CDS;gene=zpcQ;product=unknown;protein_id=AGQ21297.1;transl_table=11
+KF365913.1	Genbank	gene	60892	61380	.	+	.	ID=gene-zpcR;Name=zpcR;gbkey=Gene;gene=zpcR;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	60892	61380	.	+	0	ID=cds-AGQ21298.1;Parent=gene-zpcR;Dbxref=NCBI_GP:AGQ21298.1;Name=AGQ21298.1;gbkey=CDS;gene=zpcR;product=unknown;protein_id=AGQ21298.1;transl_table=11
+KF365913.1	Genbank	gene	61377	62969	.	+	.	ID=gene-zpcS;Name=zpcS;gbkey=Gene;gene=zpcS;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	61377	62969	.	+	0	ID=cds-AGQ21299.1;Parent=gene-zpcS;Dbxref=NCBI_GP:AGQ21299.1;Name=AGQ21299.1;Note=phage related;gbkey=CDS;gene=zpcS;product=replicative DNA helicase;protein_id=AGQ21299.1;transl_table=11
+KF365913.1	Genbank	gene	63241	64089	.	+	.	ID=gene-zpcT;Name=zpcT;gbkey=Gene;gene=zpcT;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	63241	64089	.	+	0	ID=cds-AGQ21300.1;Parent=gene-zpcT;Dbxref=NCBI_GP:AGQ21300.1;Name=AGQ21300.1;gbkey=CDS;gene=zpcT;product=DNA primase;protein_id=AGQ21300.1;transl_table=11
+KF365913.1	Genbank	gene	64150	64353	.	+	.	ID=gene-zpcU;Name=zpcU;gbkey=Gene;gene=zpcU;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	64150	64353	.	+	0	ID=cds-AGQ21301.1;Parent=gene-zpcU;Dbxref=NCBI_GP:AGQ21301.1;Name=AGQ21301.1;gbkey=CDS;gene=zpcU;product=unknown;protein_id=AGQ21301.1;transl_table=11
+KF365913.1	Genbank	gene	64343	66094	.	+	.	ID=gene-zpcV;Name=zpcV;gbkey=Gene;gene=zpcV;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	64343	66094	.	+	0	ID=cds-AGQ21302.1;Parent=gene-zpcV;Dbxref=NCBI_GP:AGQ21302.1;Name=AGQ21302.1;gbkey=CDS;gene=zpcV;product=single-stranded DNA exonuclease;protein_id=AGQ21302.1;transl_table=11
+KF365913.1	Genbank	gene	66167	66691	.	-	.	ID=gene-zpcW;Name=zpcW;gbkey=Gene;gene=zpcW;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	66167	66691	.	-	0	ID=cds-AGQ21303.1;Parent=gene-zpcW;Dbxref=NCBI_GP:AGQ21303.1;Name=AGQ21303.1;gbkey=CDS;gene=zpcW;product=HTH DNA-binding protein;protein_id=AGQ21303.1;transl_table=11
+KF365913.1	Genbank	gene	66851	67309	.	+	.	ID=gene-zpcX;Name=zpcX;gbkey=Gene;gene=zpcX;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	66851	67309	.	+	0	ID=cds-AGQ21304.1;Parent=gene-zpcX;Dbxref=NCBI_GP:AGQ21304.1;Name=AGQ21304.1;gbkey=CDS;gene=zpcX;product=nucleoside 2-deoxyribosyltransferase;protein_id=AGQ21304.1;transl_table=11
+KF365913.1	Genbank	gene	67414	67692	.	+	.	ID=gene-zpcY;Name=zpcY;gbkey=Gene;gene=zpcY;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	67414	67692	.	+	0	ID=cds-AGQ21305.1;Parent=gene-zpcY;Dbxref=NCBI_GP:AGQ21305.1;Name=AGQ21305.1;gbkey=CDS;gene=zpcY;product=thioredoxin;protein_id=AGQ21305.1;transl_table=11
+KF365913.1	Genbank	gene	67761	68321	.	+	.	ID=gene-zpcZ;Name=zpcZ;gbkey=Gene;gene=zpcZ;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	67761	68321	.	+	0	ID=cds-AGQ21306.1;Parent=gene-zpcZ;Dbxref=NCBI_GP:AGQ21306.1;Name=AGQ21306.1;gbkey=CDS;gene=zpcZ;product=HD hydrolase domain protein;protein_id=AGQ21306.1;transl_table=11
+KF365913.1	Genbank	gene	68580	68672	.	+	.	ID=gene-comI;Name=comI;gbkey=Gene;gene=comI;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	68580	68672	.	+	0	ID=cds-AGQ21307.1;Parent=gene-comI;Dbxref=NCBI_GP:AGQ21307.1;Name=AGQ21307.1;gbkey=CDS;gene=comI;product=competence inhibitor protein;protein_id=AGQ21307.1;transl_table=11
+KF365913.1	Genbank	gene	69204	69965	.	+	.	ID=gene-zpdA;Name=zpdA;gbkey=Gene;gene=zpdA;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	69204	69965	.	+	0	ID=cds-AGQ21308.1;Parent=gene-zpdA;Dbxref=NCBI_GP:AGQ21308.1;Name=AGQ21308.1;gbkey=CDS;gene=zpdA;product=unknown;protein_id=AGQ21308.1;transl_table=11
+KF365913.1	Genbank	gene	70158	70619	.	+	.	ID=gene-zpdB;Name=zpdB;gbkey=Gene;gene=zpdB;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	70158	70619	.	+	0	ID=cds-AGQ21309.1;Parent=gene-zpdB;Dbxref=NCBI_GP:AGQ21309.1;Name=AGQ21309.1;gbkey=CDS;gene=zpdB;product=unknown;protein_id=AGQ21309.1;transl_table=11
+KF365913.1	Genbank	gene	70619	71086	.	+	.	ID=gene-zpdC;Name=zpdC;gbkey=Gene;gene=zpdC;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	70619	71086	.	+	0	ID=cds-AGQ21310.1;Parent=gene-zpdC;Dbxref=NCBI_GP:AGQ21310.1;Name=AGQ21310.1;gbkey=CDS;gene=zpdC;product=ribonuclease H;protein_id=AGQ21310.1;transl_table=11
+KF365913.1	Genbank	gene	71083	71319	.	+	.	ID=gene-zpdD;Name=zpdD;gbkey=Gene;gene=zpdD;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	71083	71319	.	+	0	ID=cds-AGQ21311.1;Parent=gene-zpdD;Dbxref=NCBI_GP:AGQ21311.1;Name=AGQ21311.1;gbkey=CDS;gene=zpdD;product=unknown;protein_id=AGQ21311.1;transl_table=11
+KF365913.1	Genbank	gene	71416	72390	.	+	.	ID=gene-zpdE;Name=zpdE;gbkey=Gene;gene=zpdE;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	71416	72390	.	+	0	ID=cds-AGQ21312.1;Parent=gene-zpdE;Dbxref=NCBI_GP:AGQ21312.1;Name=AGQ21312.1;gbkey=CDS;gene=zpdE;product=FAD-dependent thymidylate synthase;protein_id=AGQ21312.1;transl_table=11
+KF365913.1	Genbank	gene	72390	72842	.	+	.	ID=gene-zpdF;Name=zpdF;gbkey=Gene;gene=zpdF;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	72390	72842	.	+	0	ID=cds-AGQ21313.1;Parent=gene-zpdF;Dbxref=NCBI_GP:AGQ21313.1;Name=AGQ21313.1;gbkey=CDS;gene=zpdF;product=unknown;protein_id=AGQ21313.1;transl_table=11
+KF365913.1	Genbank	gene	72958	76800	.	+	.	ID=gene-zpdG;Name=zpdG;gbkey=Gene;gene=zpdG;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	72958	76800	.	+	0	ID=cds-AGQ21314.1;Parent=gene-zpdG;Dbxref=NCBI_GP:AGQ21314.1;Name=AGQ21314.1;gbkey=CDS;gene=zpdG;product=DNA polymerase III alpha subunit;protein_id=AGQ21314.1;transl_table=11
+KF365913.1	Genbank	gene	77087	77461	.	+	.	ID=gene-zpdH;Name=zpdH;gbkey=Gene;gene=zpdH;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	77087	77461	.	+	0	ID=cds-AGQ21315.1;Parent=gene-zpdH;Dbxref=NCBI_GP:AGQ21315.1;Name=AGQ21315.1;gbkey=CDS;gene=zpdH;product=dUTPase;protein_id=AGQ21315.1;transl_table=11
+KF365913.1	Genbank	gene	77467	77598	.	+	.	ID=gene-zpdI;Name=zpdI;gbkey=Gene;gene=zpdI;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	77467	77598	.	+	0	ID=cds-AGQ21316.1;Parent=gene-zpdI;Dbxref=NCBI_GP:AGQ21316.1;Name=AGQ21316.1;gbkey=CDS;gene=zpdI;product=unknown;protein_id=AGQ21316.1;transl_table=11
+KF365913.1	Genbank	gene	77635	77844	.	+	.	ID=gene-zpdJ;Name=zpdJ;gbkey=Gene;gene=zpdJ;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	77635	77844	.	+	0	ID=cds-AGQ21317.1;Parent=gene-zpdJ;Dbxref=NCBI_GP:AGQ21317.1;Name=AGQ21317.1;gbkey=CDS;gene=zpdJ;product=unknown;protein_id=AGQ21317.1;transl_table=11
+KF365913.1	Genbank	gene	78004	78300	.	+	.	ID=gene-zpdK;Name=zpdK;gbkey=Gene;gene=zpdK;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	78004	78300	.	+	0	ID=cds-AGQ21318.1;Parent=gene-zpdK;Dbxref=NCBI_GP:AGQ21318.1;Name=AGQ21318.1;gbkey=CDS;gene=zpdK;product=unknown;protein_id=AGQ21318.1;transl_table=11
+KF365913.1	Genbank	gene	78297	78845	.	+	.	ID=gene-zpdL;Name=zpdL;gbkey=Gene;gene=zpdL;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	78297	78845	.	+	0	ID=cds-AGQ21319.1;Parent=gene-zpdL;Dbxref=NCBI_GP:AGQ21319.1;Name=AGQ21319.1;gbkey=CDS;gene=zpdL;product=guanylate kinase;protein_id=AGQ21319.1;transl_table=11
+KF365913.1	Genbank	gene	78842	79399	.	+	.	ID=gene-zpdM;Name=zpdM;gbkey=Gene;gene=zpdM;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	78842	79399	.	+	0	ID=cds-AGQ21320.1;Parent=gene-zpdM;Dbxref=NCBI_GP:AGQ21320.1;Name=AGQ21320.1;gbkey=CDS;gene=zpdM;product=crossover junction endodeoxyribonuclease;protein_id=AGQ21320.1;transl_table=11
+KF365913.1	Genbank	gene	79913	80512	.	+	.	ID=gene-zpdN;Name=zpdN;gbkey=Gene;gene=zpdN;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	79913	80512	.	+	0	ID=cds-AGQ21321.1;Parent=gene-zpdN;Dbxref=NCBI_GP:AGQ21321.1;Name=AGQ21321.1;gbkey=CDS;gene=zpdN;product=ECF sigma factor;protein_id=AGQ21321.1;transl_table=11
+KF365913.1	Genbank	gene	81066	81893	.	+	.	ID=gene-alfA;Name=alfA;gbkey=Gene;gene=alfA;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	81066	81893	.	+	0	ID=cds-AGQ21322.1;Parent=gene-alfA;Dbxref=NCBI_GP:AGQ21322.1;Name=AGQ21322.1;gbkey=CDS;gene=alfA;product=actin-like segregation protein;protein_id=AGQ21322.1;transl_table=11
+KF365913.1	Genbank	gene	81890	82171	.	+	.	ID=gene-alfB;Name=alfB;gbkey=Gene;gene=alfB;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	81890	82171	.	+	0	ID=cds-AGQ21323.1;Parent=gene-alfB;Dbxref=NCBI_GP:AGQ21323.1;Name=AGQ21323.1;gbkey=CDS;gene=alfB;product=DNA binding segregation protein;protein_id=AGQ21323.1;transl_table=11
+KF365913.1	Genbank	gene	82168	82323	.	+	.	ID=gene-zpdO;Name=zpdO;gbkey=Gene;gene=zpdO;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	82168	82323	.	+	0	ID=cds-AGQ21324.1;Parent=gene-zpdO;Dbxref=NCBI_GP:AGQ21324.1;Name=AGQ21324.1;gbkey=CDS;gene=zpdO;product=unknown;protein_id=AGQ21324.1;transl_table=11
+KF365913.1	Genbank	gene	82463	82678	.	+	.	ID=gene-zpdP;Name=zpdP;gbkey=Gene;gene=zpdP;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	82463	82678	.	+	0	ID=cds-AGQ21325.1;Parent=gene-zpdP;Dbxref=NCBI_GP:AGQ21325.1;Name=AGQ21325.1;gbkey=CDS;gene=zpdP;product=unknown;protein_id=AGQ21325.1;transl_table=11
+KF365913.1	Genbank	gene	82795	83382	.	+	.	ID=gene-zpdQ;Name=zpdQ;gbkey=Gene;gene=zpdQ;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	82795	83382	.	+	0	ID=cds-AGQ21326.1;Parent=gene-zpdQ;Dbxref=NCBI_GP:AGQ21326.1;Name=AGQ21326.1;gbkey=CDS;gene=zpdQ;product=thymidine kinase;protein_id=AGQ21326.1;transl_table=11
+KF365913.1	Genbank	gene	83492	83857	.	+	.	ID=gene-zpdR;Name=zpdR;gbkey=Gene;gene=zpdR;gene_biotype=protein_coding
+KF365913.1	Genbank	CDS	83492	83857	.	+	0	ID=cds-AGQ21327.1;Parent=gene-zpdR;Dbxref=NCBI_GP:AGQ21327.1;Name=AGQ21327.1;gbkey=CDS;gene=zpdR;product=unknown;protein_id=AGQ21327.1;transl_table=11
+

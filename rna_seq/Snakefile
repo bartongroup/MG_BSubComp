@@ -6,7 +6,7 @@
 #
 # mamba create --name bsub_comp
 # mamba activate bsub_comp
-# mamba install snakemake=7.32.4 fastqc multiqc samtools bedtools star fastp fastq-screen drmaa qualimap ribodetector deeptools
+# mamba install snakemake=7.32.4 fastqc multiqc samtools bedtools star fastp fastq-screen drmaa qualimap ribodetector deeptools rseqc subread
 #
 ### To recreate the environment
 #
@@ -26,15 +26,20 @@ genome_dir = 'genome'
 
 genome_file_name =  os.path.basename(genome_url).removesuffix('.gz')
 gtf_file_name =  os.path.basename(gtf_url).removesuffix('.gz')
+bed_file_name = gtf_file_name.rsplit('.', 1)[0] + '.bed'
 
 genome_file = os.path.join(genome_dir, genome_file_name)
 gtf_file = os.path.join(genome_dir, gtf_file_name)
+bed_file = os.path.join(genome_dir, bed_file_name)
 
 genome_index = genome_file + '.fai'
 genome_size_file = genome_file + '.txt'
 
 # Read length for ribodetector
 read_length = config['read_length']
+
+# Strand for featureCounts
+strand = config['featureCounts_strand']
 
 # Fastq Screen config file
 fscreen_config = config['fastq_screen_config']
@@ -65,14 +70,16 @@ FSCREENS = expand('fscreen/{sample}_{pair}_screen.txt', sample = SAMPLES, pair =
 MULTIQC = ['multiqc/report.html']
 BAMS = expand('bam/{sample}.bam', sample = SAMPLES)
 BAIS = expand('bam/{sample}.bam.bai', sample = SAMPLES)
+STRANDS = expand('strand/{sample}_strand.txt', sample = SAMPLES)
 COUNTS = expand('readcount/{sample}.txt', sample = SAMPLES)
+SUBREADS = expand('subread/{sample}.txt', sample = SAMPLES)
 CHRSTATS = expand('chrcount/{sample}.txt', sample = SAMPLES)
 BEDGRAPHS = expand('bedgraph/{sample}.' + window_size + '.bedgraph', sample = SAMPLES)
 
 ####################################################################
 
 rule all:
-    input: ENVIRONMENT + QCS + FSCREENS + CHRSTATS + MULTIQC + COUNTS + BEDGRAPHS + TRIM_COUNTS + CLEAN_COUNTS
+    input: ENVIRONMENT + QCS + FSCREENS + CHRSTATS + MULTIQC + COUNTS + SUBREADS + STRANDS + BEDGRAPHS + TRIM_COUNTS + CLEAN_COUNTS
 
 ####################################################################
 # Save environment
@@ -202,6 +209,20 @@ rule load_gtf:
     shell:
         'wget {gtf_url} -O - | gunzip -c > {gtf_file}'
 
+rule convert_gft_to_bed:
+    input: gtf_file
+    output: bed_file
+    shell:
+        """
+        grep -P "\tgene\t" {input} \
+        | cut -f1,4,5,7,9 \
+        | sed 's/[[:space:]]/\t/g' \
+        | sed 's/[;|"]//g' \
+        | awk -F $'\t' 'BEGIN {{ OFS=FS }} {{ print $1,$2-1,$3,$6,".",$4,$10,$12,$14 }}' \
+        | sort -k1,1 -k2,2n > {output}
+        """
+
+
 ####################################################################
 # Index genome, create chromosome size file
 
@@ -231,8 +252,6 @@ rule star_index:
         STAR \
         --runMode genomeGenerate \
         --genomeFastaFiles {input.genome} \
-        --sjdbGTFfile {input.gtf} \
-        --sjdbGTFfeatureExon gene \
         --outTmpDir $TMPDIR/star_index \
         --genomeDir {star_index_dir} \
         --genomeSAindexNbases 10 \
@@ -286,6 +305,28 @@ rule index_bam:
     shell:
         'samtools index {input}'
 
+
+####################################################################
+# Check strandedness
+
+rule check_strandedness:
+    input:
+        bed = bed_file,
+        bam = 'bam/{sample}.bam'
+    output: 'strand/{sample}_strand.txt'
+    shell:
+        'infer_experiment.py -r {input.bed} -i {input.bam} > {output}'
+
+####################################################################
+# Counts with subread
+
+rule subread_counts:
+    input:
+        gtf = gtf_file,
+        bam = 'bam/{sample}.bam'
+    output: 'subread/{sample}.txt'
+    shell:
+        'featureCounts -p -t gene -s {strand} -a {input.gtf} -o {output} {input.bam}'
 
 ####################################################################
 # Counts per chromosome

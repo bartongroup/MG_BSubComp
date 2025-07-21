@@ -8,6 +8,8 @@ readcount/*.txt
 chrcount/*.txt
 bedgraph/*
 starmap/*.final.out
+strand/*
+subread/*
 fastq_screen.conf
 Snakefile
 environment.txt

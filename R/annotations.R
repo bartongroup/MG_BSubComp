@@ -88,6 +88,9 @@ prepare_terms_fenr <- function(terms, all_features) {
     set_names(ontologies)
 }
 
+get_subtiwiki_genes <- function() {
+  read_csv("info/2025-07-21_09-26-20_subti_wiki_export_genes.csv")
+}
 
 # Download operon clustering from SubtiWiki
 get_operons <- function(genes) {
@@ -141,7 +144,7 @@ group_terms_operons <- function(terms, operons) {
 }
 
 
-annotate_ncbi_plasmid <- function(genes, gff, anchor_gene = c("B4U62_RS22265" = "rapP"), len = 84215) {
+ncbi_plasmid_annotations <- function(genes, gff, anchor_gene = c("B4U62_RS22265" = "rapP"), len = 84215) {
   g <- genes |> 
     filter(chr == "NZ_CP020103.1")
   f <- gff |> 
@@ -158,6 +161,15 @@ annotate_ncbi_plasmid <- function(genes, gff, anchor_gene = c("B4U62_RS22265" = 
   g |> 
     mutate(s = start + dif) |> 
     mutate(s = if_else(s > len, s - len, s))  |> 
-    left_join(f, by = c("s" = "start"))
-    
+    left_join(f, by = c("s" = "start")) |> 
+    select(-c(gene_symbol, s)) |> 
+    rename(gene_symbol = Name) |> 
+    relocate(gene_symbol, .after = id)
 }
+
+annotate_plasmid_genes <- function(genes, plasmid_annot) {
+  chrom <- genes |> 
+    filter(chr == "NZ_CP020102.1")
+  bind_rows(chrom, plasmid_annot)
+}
+

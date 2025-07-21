@@ -11,8 +11,15 @@ targets_main <- function() {
 
   get_annotations = tar_plan(
     gtf = rtracklayer::import(yaml$gtf_url),
-    genes = get_gene_annotations_from_gtf(gtf),
-    chromosomes = genes$chr |> unique() |> as.character(),
+    # Following https://pmc.ncbi.nlm.nih.gov/articles/PMC3754741,
+    # plasmid GFF was downloaded from https://ncbi.nlm.nih.gov/nucleotide/KF365913
+    gff_KF365913 = rtracklayer::import("info/KF365913.gff3"),
+    genes_gtf = get_gene_annotations_from_gtf(gtf),
+    chromosomes = genes_gtf$chr |> unique() |> as.character(),
+    plasmid_annot = ncbi_plasmid_annotations(genes_gtf, gff_KF365913),
+    genes = annotate_plasmid_genes(genes_gtf, plasmid_annot),
+    sw_genes = get_subtiwiki_genes(),
+    sw_gene_match = match_genes_by_coordinates(genes, sw_genes, max_diff = 50),
     operons = get_operons(genes),
     terms = get_functional_terms(gtf, kg_spec = "bsu"),
     fterms = prepare_terms_fenr(terms, genes$id)
@@ -38,16 +45,19 @@ targets_main <- function() {
   )
 
    star <- tar_plan(
-    star = read_and_process_star(config, metadata, genes, min_count = 10),
+    star = read_and_process_subread(config, metadata, genes, min_count = 10),
     bg = read_bedgraphs(config, metadata),
     
-    tab_star_log = star$star_log,
-    fig_star_log = plot_star_log(star, group_var = "group"),
-    fig_star_log_map = plot_star_log_map(star),
-    fig_map_count = plot_mapped_count(star),
+    fig_subread_log_count = plot_subread_count(star), 
+    tbl_strandedness = parse_strandedness(config, metadata),
+
+    #tab_star_log = star$star_log,
+    #fig_star_log = plot_star_log(star, group_var = "group"),
+    #fig_star_log_map = plot_star_log_map(star),
+    #fig_map_count = plot_mapped_count(star),
     
-    example_count_file = one_count_file(config, metadata, 1),
-    fig_star_sense = plot_star_sense(example_count_file),
+    #example_count_file = one_count_file(config, metadata, 1),
+    #fig_star_sense = plot_star_sense(example_count_file),
 
     fig_bedgraphs = plot_bedgraphs_region(bg, "NZ_CP020102.1", 0, Inf)
   )
@@ -108,7 +118,19 @@ targets_main <- function() {
     gsea = print_gse(gse, star$genes, fdr_limit = 1),
     gsea_ops = print_gse(gse_ops, star_ops$genes, fdr_limit = 1),
     sav_gse = write_table(gsea),
-    sav_gse_ops = write_table(gsea_ops)
+    sav_gse_ops = write_table(gsea_ops),
+
+    cmp_ncbi_sw = compare_ncbi_sw_genes(genes, sw_genes, limit_line = 50)
+  )
+
+  toxins_and_antibiotics <- tar_plan(
+    tar_target(toxan_file, "info/toxins_and_antibiotics.xlsx", format = "file"),
+    toxan = read_toxins_and_antibiotics(toxan_file, genes, sw_genes, max_diff = 50),
+    de_toxan = rename_toxan_genes(de, toxan),
+    de_toxan_sel = de_toxan |> filter(id %in% toxan$id),
+    star_toxan = rename_toxan_genes_in_set(star, toxan),
+    fig_volcano_toxan = mn_plot_volcano(de_toxan, group_ids = toxan |> add_column(group = "Toxins and antibiotics")),
+    fig_heatmap_toxan = plot_fc_heatmap(star_toxan, id_sel = toxan$id, with_x_text = TRUE, with_y_text = TRUE, max_fc = NA)
   )
 
   shiny <- tar_plan(
@@ -120,7 +142,7 @@ targets_main <- function() {
     tar_target(version_file, file.path(config$data_path, "environment.txt"), format = "file"),
     software_versions = get_software_versions(
       version_file,
-      selection = c("fastqc", "fastq-screen", "fastp", "ribodetector", "multiqc", "star", "samtools", "bedtools", "snakemake", "drmaa", "deeptools")
+      selection = c("fastqc", "fastq-screen", "fastp", "ribodetector", "multiqc", "star", "subread", "rseqc", "samtools", "bedtools", "snakemake", "drmaa", "deeptools")
     )
   )
   
@@ -132,6 +154,7 @@ targets_main <- function() {
     star,
     diff_expr,
     group_operons,
+    toxins_and_antibiotics,
     for_report,
     shiny
   )

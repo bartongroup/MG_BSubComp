@@ -36,6 +36,7 @@ read_and_process_star <- function(config, meta, gene_info, suffix = ".txt", min_
     filter_star_min_count(min_count)
 }
 
+
 #' Add STAR Log Information
 #'
 #' Adds log information from STAR alignment to the dataset.
@@ -151,6 +152,7 @@ parse_star_counts <- function(path, meta, column = 2, suffix = ".txt", fix_names
   list(dat = dat, tab = tab, metadata = meta, sel = rownames(tab))
 }
 
+
 #' Add Gene Names to Dataset
 #'
 #' Adds human-readable gene names to the dataset based on gene identifiers.
@@ -161,7 +163,7 @@ parse_star_counts <- function(path, meta, column = 2, suffix = ".txt", fix_names
 #' @return The dataset with added gene symbols.
 add_gene_names <- function(set, gene_info) {
   set$genes <- tibble(id = rownames(set$tab)) |> 
-    left_join(gene_info |> select(id, gene_symbol, description) |> distinct(), by = "id") |> 
+    left_join(gene_info |> select(id, gene_symbol, description, chr, start, end, strand) |> distinct(), by = "id") |> 
     mutate(gene_symbol = if_else(is.na(gene_symbol), id, gene_symbol))
   set
 }
@@ -934,8 +936,36 @@ group_counts_operons <- function(set, operons, min_count = 10) {
     genes = genes,
     dat = dat,
     tab = dat2mat(dat, id_col = "id", value_col = "count"),
-    star_log = set$star_log
+    #star_log = set$star_log
+    subread_log = set$subread_log
   ) |> 
-    normalize_star_counts(genes) |> 
+    normalize_subread_counts(genes) |> 
     filter_star_min_count(min_count)
+}
+
+
+parse_one_strandedness <- function(fname, smpl) {
+  st <- read_lines(fname)
+  for(i in 1:length(st)) {
+    s <- st[i]
+    if(str_detect(s, "1\\+\\+,1\\-\\-,2\\+\\-,2\\-\\+")) {
+      fwd <- str_extract(s, "\\s[0-9\\.]+$") |> as.numeric()
+    } else if(str_detect(s, "1\\+\\-,1\\-\\+,2\\+\\+,2\\-\\-")) {
+      rev <- str_extract(s, "\\s[0-9\\.]+$") |> as.numeric()
+    }
+  }
+  tibble(
+    raw_sample = smpl,
+    forward_fraction = fwd,
+    reverse_fraction = rev
+  )
+}
+
+parse_strandedness <- function(config, meta) {
+  path <- file.path(config$data_path, config$dir$strand)
+  s2n <- set_names(meta$sample, meta$raw_sample)
+  meta$raw_sample |> 
+    map(~parse_one_strandedness(file.path(path, paste0(.x, "_strand.txt")), .x)) |> 
+    list_rbind() |> 
+    mutate(sample = as.character(s2n[raw_sample]))
 }

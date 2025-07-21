@@ -192,12 +192,15 @@ tar_read(fig_read_qual_clust)
 
 Bacillus subtilis NCIB 3610 [genome assembly ASM205596v1](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_002055965.1/) has been downloaded from NCBI (genome sequence and GTF annotations). It consists of two sequences, with GeneBank locus ID CP020102.1 for the chromosome and CP020103.1 for the plasmid. The lengths of the chromosome and plasmid are 4,215,607 and 84,215 bp, respectively.
 
+Alas, the NCBI genome does not come with gene names in the plasmid. All genes in the plasmid are annotated only by a locus ID, e.g. B4U62_RS22265. [Konkol, Blair and Kearns (2013)](https://pmc.ncbi.nlm.nih.gov/articles/PMC3754741/) annotated genes in the plasmid. Quote: "We have annotated and submitted to GenBank 102 genes carried by pBS32, named by using the following nomenclature: zpxX, where the x's are sequential letters clockwise from the repN gene encoding an essential replication protein (see GenBank accession number [KF365913](https://ncbi.nlm.nih.gov/nucleotide/KF365913) for individual gene annotations). Whereas genes of unknown function in the chromosome begin with the letter “y,” and genes carried by chromosomal prophages begin with the letter “x,” we chose the letter “z” to indicate genes of unknown function carried on the endogenous plasmid."
+
+These annotations have been downloaded from GenBank and applied to the plasmid genes. One of the genes included in the new annotations is B4U62_RS22265, annotated as *rapP*.
+
 ## Mapping
 
 [STAR](https://github.com/alexdobin/STAR) was used to map reads to the reference genome ASM205596v1 downloaded from NCBI. The following parameters were used for creating the index:
 
 ```
- --sjdbGTFfeatureExon gene
  --genomeSAindexNbases 10
 ```
 
@@ -214,50 +217,35 @@ and for mapping:
 --quantMode GeneCounts
 ```
 
-The `--alignIntronMax 1` option prohibits splicing (STAR is a splice-aware aligner). The `--sjdbGTFfeatureExon gene` option is included both in the index build and mapping, because the GFT file does not have exons and `gene` is the main feature.
-
-## Mapping properties
-
-@fig-star-log and @fig-map-count show mapping summaries. The 'bad' sample `mut_5` has about the half of the read count of other samples, due to ribosomal contamination - these figures show results from clean data, after ribosomal sequences removal. However, the percentage of uniquely mapped reads remain high for all samples, including `mut_5`.
-
-```{r}
-#| label: fig-star-log
-#| fig-cap: STAR mapping properties. 
-#| fig-width: 6
-#| fig-height: 10
-tar_read(fig_star_log) 
-```
-
-```{r}
-#| label: fig-map-count
-#| fig-cap: Input counts vs mapped and counted reads. Samples are ordered from the lowest to the highest percentage of uniquely mapped reads.
-#| fig-width: 8
-#| fig-height: 4
-tar_read(fig_map_count)
-```
+The `--alignIntronMax 1` option prohibits splicing (STAR is a splice-aware aligner). The `--sjdbGTFfeatureExon gene` option is included both in mapping, because the GFT file does not have exons and `gene` is the main feature.
 
 ## Strandedness
 
-RNA-seq reads can be either strand-specific or unstranded, depending on the protocol used. The orientation of stranded paired-end reads also varies with the protocol. *STAR* provides the following count measures in the quantification file:
+[infer_experiment.py](https://open.bioqueue.org/home/knowledge/showKnowledge/sig/rseqc-infer-experiment) script from package [RSeQC](https://rseqc.sourceforge.net/) was used to identify strandedness of data. @tbl-strand shows that majority of reads are explained by the reverse strand. This confirms that the reversely-stranded protocol, consistent with TruSeq chemistry, was used.
 
- - Column 2: Counts for unstranded RNA-seq
- - Column 3: Counts for the first read strand aligned with RNA
- - Column 4: Counts for the second read strand aligned with RNA
- 
-@fig-star-sense illustrates the summary of total counts in each column of a sample file. The counts for the first and second read strands are nearly identical, indicating that our reads are unstranded.
+```{r}
+#| label: tbl-strand
+#| tbl-cap: Output from infer_experiment.py.
+tar_read(tbl_strandedness) |> 
+  select(Sample = sample, `Forward fraction` = forward_fraction, `Reverse fraction` = reverse_fraction) |> 
+  gt()
+```
 
-::: {.callout-note}
-We recommend instructing the sequencing centre to use a stranded protocol when submitting samples. Stranded data improve mapping accuracy.
-:::
+## Counting reads
+
+[Subread featureCounts](https://subread.sourceforge.net/featureCounts.html) was used to count reads in genes, using the parameter `-s 2`, for reversely-stranded read counting.
+
+## Mapping properties
 
 
 ```{r}
-#| label: fig-star-sense
-#| fig-cap: Distribution of log read count per STAR output file column. The first and second strand counts are similar, indicating unstranded data, so we read column 2.
-#| fig-width: 5
-#| fig-height: 3
-tar_read(fig_star_sense)
+#| label: fig-map-count
+#| fig-cap: Input counts vs assigned reads. Samples are ordered from the lowest to the highest percentage of uniquely mapped reads.
+#| fig-width: 8
+#| fig-height: 4
+tar_read(fig_subread_log_count)
 ```
+
 
 ## Full QC report
 
@@ -324,7 +312,7 @@ tar_read(fig_mut_1_2)
 
 # Silenced genes
 
-@fig-rapp and @fig-coma show the read pileup from around *rapP* and *comA* loci. *rapP* is annotated as B4U62_RS22265 and shows no reads from 29,723 to 30,707 on the plasmid. *comA* shows no reads from 3,252,894 to 3,253,365 on the chromosome. These regions have been excised from the genome in the mutant.
+@fig-rapp and @fig-coma show the read pileup from around *rapP* and *comA* loci. *rapP* shows no reads from 29,723 to 30,707 on the plasmid. *comA* shows no reads from 3,252,894 to 3,253,365 on the chromosome. These regions have been excised from the genome in the mutant.
 
 
 ```{r, out.width="100%"}
@@ -517,6 +505,70 @@ tar_read(tbl_gse) |>
     n_sigfig = 3
   )
 ```
+
+# Toxins and antibiotics
+
+```{r}
+tar_load(toxan)
+n_toxan <- nrow(toxan)
+n_on_ncbi <- toxan |> filter(ncbi) |> nrow()
+n_not_on_ncbi <- toxan |> filter(!ncbi) |> nrow()
+```
+
+A list of `r n_toxan + 1` toxins and antibiotics was provided. At the first step, *pksK* was removed from the list, as it was found to be a synonym of *pksJ*, already on the list. Then the gene symbols on the list were matched to the NCBI annotations, where possible. `r n_on_ncbi` genes were found matching directly, by the gene symbol. The remaining `r n_not_on_ncbi` genes were matched to *SubtiWiki* annotations and then mapped to the NCBI data by coordinates, matching start and end of each gene within ±50 bp of the start and end of the NCBI coordinates, respectively. *yfjE* with a very different length in both sets of annotations was matched manually to B4U62_RS04555.
+
+```{r}
+#| label: tbl-toxan-match
+#| tbl-cap: Results of matching toxins and antibiotics to the NCBI annotations. There are two different genes annotated as *ppsA* in NCBI. Here, they are distinguished by calling them *ppsA* and *ppsA.1*.
+toxan |> 
+  mutate(ncbi_gene = tidyr::replace_na(ncbi_gene, "--")) |> 
+  select(`Gene symbol` = gene_symbol, `Matching NCBI gene` = ncbi_gene, `NCBI id` = id, Start = start, End = end) |> 
+  gt()
+```
+
+
+```{r}
+#| label: fig-volcano-toxan
+#| fig-cap: Volcano plot with toxins and antibiotics highlighted. The horizontal lines indicate FDR limit of 0.01 and 0.05.
+#| fig-width: 8
+#| fig-height: 8
+tar_read(fig_volcano_toxan) +
+  ggplot2::theme(legend.position = "none")
+```
+
+```{r}
+#| label: fig-heatmap-toxan
+#| fig-cap: Heatmap with toxins and antibiotics highlighted. The colours show relative change of rlog expression with respect to the mean in each gene.
+#| fig-width: 5
+#| fig-height: 15
+tar_read(fig_heatmap_toxan)
+```
+
+
+```{r}
+#| label: tbl-de-toxan
+#| tbl-cap: "Differential expression results for the toxin and antibiotics gene selection. Green background indicates two parts of the 'significant' selection: FDR < 0.01 and |logFC| > 1."
+tar_read(de_toxan_sel) |> 
+  select(ID = id, Gene = gene_symbol, logFC, FDR) |> 
+  gt() |> 
+  fmt_number(
+    columns = c(logFC,  FDR),
+    n_sigfig = 2
+  ) |> 
+  data_color(
+    columns = logFC,
+    rows = abs(logFC) > 1,
+    method = "numeric",
+    palette = "green"
+  ) |> 
+    data_color(
+    columns = FDR,
+    rows = FDR < 0.01,
+    method = "numeric",
+    palette = "green"
+  )
+```
+
 
 # Resources {#sec-resources}
 

@@ -7,6 +7,8 @@
     "fastq_clean" : "fastq_clean",
     "mapping" : "starmap",
     "read_count" : "readcount",
+    "subread" : "subread",
+    "strand" : "strand",
     "chr_count" : "chrcount",
     "fastq_screen" : "fscreen",
     "bedgraph" : "bedgraph",
