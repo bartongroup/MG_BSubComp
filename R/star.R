@@ -937,9 +937,9 @@ group_counts_operons <- function(set, operons, min_count = 10) {
     dat = dat,
     tab = dat2mat(dat, id_col = "id", value_col = "count"),
     #star_log = set$star_log
-    subread_log = set$subread_log
+    star_log = set$star_log
   ) |> 
-    normalize_subread_counts(genes) |> 
+    normalize_star_counts(genes) |> 
     filter_star_min_count(min_count)
 }
 

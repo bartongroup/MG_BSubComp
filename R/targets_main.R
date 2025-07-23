@@ -45,19 +45,16 @@ targets_main <- function() {
   )
 
    star <- tar_plan(
-    star = read_and_process_subread(config, metadata, genes, min_count = 10),
+    star = read_and_process_star(config, metadata, genes, min_count = 10),
     bg = read_bedgraphs(config, metadata),
     
-    fig_subread_log_count = plot_subread_count(star), 
-    tbl_strandedness = parse_strandedness(config, metadata),
-
-    #tab_star_log = star$star_log,
-    #fig_star_log = plot_star_log(star, group_var = "group"),
-    #fig_star_log_map = plot_star_log_map(star),
-    #fig_map_count = plot_mapped_count(star),
+    tab_star_log = star$star_log,
+    fig_star_log = plot_star_log(star, group_var = "group"),
+    fig_star_log_map = plot_star_log_map(star),
+    fig_map_count = plot_mapped_count(star),
     
-    #example_count_file = one_count_file(config, metadata, 1),
-    #fig_star_sense = plot_star_sense(example_count_file),
+    example_count_file = one_count_file(config, metadata, 1),
+    fig_star_sense = plot_star_sense(example_count_file),
 
     fig_bedgraphs = plot_bedgraphs_region(bg, "NZ_CP020102.1", 0, Inf)
   )

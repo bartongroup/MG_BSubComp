@@ -66,7 +66,7 @@ read_toxins_and_antibiotics <- function(fname, genes, sw_genes, max_diff = 50,
     add_column(ncbi = FALSE)
 
   bind_rows(tb1, tb2) |> 
-    left_join(select(genes, id, ncbi_gene = gene_symbol), by = "id") |> 
+    left_join(select(genes, id, ncbi_gene = gene_symbol, chr), by = "id") |> 
     relocate(ncbi_gene, .after = gene_symbol) |> 
     mutate(gene_symbol = make.unique(gene_symbol))
 }
@@ -110,6 +110,10 @@ compare_ncbi_sw_genes <- function(genes, sw_genes, limit_line = 50) {
     scale_y_log10() +
     geom_hline(yintercept = limit_line, colour = "brown") +
     labs(x = "Position in chromosome (Mbp)", y = "Difference in start posision (bp)")
+  list(
+    df = d,
+    plot = pl
+  )
 }
 
 

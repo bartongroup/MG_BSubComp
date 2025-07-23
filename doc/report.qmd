@@ -208,6 +208,7 @@ and for mapping:
 
 ```
 --sjdbGTFfeatureExon gene
+--sjdbGTFtagExonParentTranscript gene_id
 --outFilterType BySJout
 --outSAMtype BAM SortedByCoordinate
 --outFilterMultimapNmax 2
@@ -217,7 +218,7 @@ and for mapping:
 --quantMode GeneCounts
 ```
 
-The `--alignIntronMax 1` option prohibits splicing (STAR is a splice-aware aligner). The `--sjdbGTFfeatureExon gene` option is included both in mapping, because the GFT file does not have exons and `gene` is the main feature.
+The `--alignIntronMax 1` option prohibits splicing (STAR is a splice-aware aligner). The `--sjdbGTFfeatureExon gene` option is included both in mapping, because the GFT file does not have exons and `gene` is the main feature. `--sjdbGTFtagExonParentTranscript gene_id` turned out to be very important; the GTF file contains blank arguments `transcript_id ""` and the default value of `sjdbGTFtagExonParentTranscript` is `transcript_id`. This causes problems and incorrect counting.
 
 ## Strandedness
 
@@ -231,20 +232,27 @@ tar_read(tbl_strandedness) |>
   gt()
 ```
 
-## Counting reads
-
-[Subread featureCounts](https://subread.sourceforge.net/featureCounts.html) was used to count reads in genes, using the parameter `-s 2`, for reversely-stranded read counting.
 
 ## Mapping properties
 
+@fig-star-log and @fig-map-count show mapping summaries. The 'bad' sample `mut_5` has about the half of the read count of other samples, due to ribosomal contamination - these figures show results from clean data, after ribosomal sequences removal. However, the percentage of uniquely mapped reads remain high for all samples, including `mut_5`.
+
+```{r}
+#| label: fig-star-log
+#| fig-cap: STAR mapping properties. 
+#| fig-width: 6
+#| fig-height: 10
+tar_read(fig_star_log) 
+```
 
 ```{r}
 #| label: fig-map-count
-#| fig-cap: Input counts vs assigned reads. Samples are ordered from the lowest to the highest percentage of uniquely mapped reads.
+#| fig-cap: Input counts vs mapped and counted reads. Samples are ordered from the lowest to the highest percentage of uniquely mapped reads.
 #| fig-width: 8
 #| fig-height: 4
-tar_read(fig_subread_log_count)
+tar_read(fig_map_count)
 ```
+
 
 
 ## Full QC report
@@ -509,7 +517,7 @@ tar_read(tbl_gse) |>
 # Toxins and antibiotics
 
 ```{r}
-tar_load(toxan)
+tar_load(toxan) 
 n_toxan <- nrow(toxan)
 n_on_ncbi <- toxan |> filter(ncbi) |> nrow()
 n_not_on_ncbi <- toxan |> filter(!ncbi) |> nrow()
@@ -522,10 +530,13 @@ A list of `r n_toxan + 1` toxins and antibiotics was provided. At the first step
 #| tbl-cap: Results of matching toxins and antibiotics to the NCBI annotations. There are two different genes annotated as *ppsA* in NCBI. Here, they are distinguished by calling them *ppsA* and *ppsA.1*.
 toxan |> 
   mutate(ncbi_gene = tidyr::replace_na(ncbi_gene, "--")) |> 
-  select(`Gene symbol` = gene_symbol, `Matching NCBI gene` = ncbi_gene, `NCBI id` = id, Start = start, End = end) |> 
+  select(chr, `Gene symbol` = gene_symbol, `Matching NCBI gene` = ncbi_gene, `NCBI id` = id, Start = start, End = end) |> 
+  group_by(chr) |> 
   gt()
 ```
 
+
+@fig-volcano-toxan shows the volcano plot from the differential expression (as in @fig-de-results), with toxin and antibiotic genes highlighted. @fig-heatmap-toxan shows a heatmap of these genes. Finally, @tbl-de-toxan lists the differential expression results for these genes, highlighting the significant genes, separately for FDR and logFC.
 
 ```{r}
 #| label: fig-volcano-toxan

@@ -278,6 +278,7 @@ rule star_mapping:
          --genomeDir {star_index_dir} \
          --sjdbGTFfile {input.gtf} \
          --sjdbGTFfeatureExon gene \
+         --sjdbGTFtagExonParentTranscript gene_id \
          --readFilesIn {input.R1} {input.R2} \
          --outTmpDir $TMPDIR/starmap_tmp \
          --outFileNamePrefix $TMPDIR/starmap/{wildcards.sample}_ \
@@ -326,7 +327,7 @@ rule subread_counts:
         bam = 'bam/{sample}.bam'
     output: 'subread/{sample}.txt'
     shell:
-        'featureCounts -p -t gene -s {strand} -a {input.gtf} -o {output} {input.bam}'
+        'featureCounts -p --countReadPairs -t gene -s {strand} -a {input.gtf} -o {output} {input.bam}'
 
 ####################################################################
 # Counts per chromosome

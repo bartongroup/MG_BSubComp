@@ -767,9 +767,12 @@ plot_gene_groups <- function(set, gid, val = "count_norm", log_scale = FALSE, ze
     left_join(set$metadata, by = "sample") |> 
     left_join(set$genes, by = "id") |> 
     filter(!bad) |> 
+    mutate(id = factor(id, levels = gid)) |> 
+    arrange(id) |> 
     mutate(value = get(val), group = get(group_var)) |> 
     mutate(zero = value == 0) |> 
     mutate(gene_symbol = if_else(is.na(gene_symbol), id, gene_symbol)) |> 
+    mutate(gene_symbol = as_factor(gene_symbol)) |> 
     mutate(sample = factor(sample, levels = set$metadata$sample))
 
   if (log_scale) {
@@ -803,6 +806,79 @@ plot_gene_groups <- function(set, gid, val = "count_norm", log_scale = FALSE, ze
       scale_fill_manual(values = okabe_ito_palette)
     if (!log_scale & zero_scale) g <-  g + scale_y_continuous(expand = expansion(mult = c(0, 0.03)), limits = c(0, NA)) 
     g
+  })
+}
+
+plot_operon <- function(set, de, gids, val = "count_norm", group_var = "group", symbol_size = 3,
+                        cex = 2, w_mean = 0.3, log_scale = FALSE, zero_scale = TRUE) {
+  env <- new.env(parent = globalenv())
+  env$ncol <- ncol
+  env$symbol_size <- symbol_size
+  env$cex <- cex
+  env$w_mean <- w_mean
+  env$log_scale <- log_scale
+  env$zero_scale <- zero_scale
+ 
+  d <- set$dat |> 
+    filter(id %in% gids & !bad) |>
+    select(-bad) |> 
+    left_join(set$metadata, by = "sample") |> 
+    left_join(set$genes, by = "id") |> 
+    filter(!bad) |> 
+    mutate(id = factor(id, levels = gids)) |> 
+    arrange(id) |> 
+    mutate(value = get(val), group = get(group_var)) |> 
+    mutate(zero = value == 0) |> 
+    mutate(gene_symbol = if_else(is.na(gene_symbol), id, gene_symbol)) |> 
+    mutate(gene_symbol = as_factor(gene_symbol)) |> 
+    mutate(sample = factor(sample, levels = set$metadata$sample))
+  if (log_scale) {
+    d$value <- log10(d$value + 0.25)
+    ylab <- paste("log_10", val)
+  } else {
+    ylab <- val
+  }
+
+  dm <- d |> 
+    group_by(gene_symbol, group) |> 
+    summarise(M = mean(value))  |> 
+    ungroup() |> 
+    mutate(ix = gene_symbol |> factor() |> as.integer())
+
+  fc <- de |> 
+    filter(id %in% gids) |>
+    mutate(gene_symbol = factor(gene_symbol, levels = levels(d$gene_symbol)))
+
+  env$d <- d
+  env$dm <- dm
+  env$fc <- fc
+  env$ylab <- "Normalised count"
+
+  with(env, {
+    g1 <- ggplot(d) +
+      th +
+      theme(
+        axis.text.x = element_blank()
+        #axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)
+        #legend.position = "none"
+      ) +
+      geom_beeswarm(aes(x = gene_symbol, y = value, fill = as.factor(replicate), shape = zero), size = symbol_size, cex = cex) +
+      geom_segment(data = dm, aes(x = ix - w_mean, xend = ix + w_mean, y = M, yend = M)) +
+      labs(x = NULL, y = ylab, fill = "Replicate") +
+      facet_wrap(~group, labeller = label_wrap_gen(), scales = "fixed", ncol = 1) +
+      scale_shape_manual(values = c(21,23)) +
+      guides(fill = guide_legend(override.aes = list(shape = 21))) +
+      scale_fill_manual(values = okabe_ito_palette)
+    if (!log_scale & zero_scale) g1 <- g1 + scale_y_continuous(expand = expansion(mult = c(0, 0.03)), limits = c(0, NA)) 
+    
+    g2 <- ggplot(fc) +
+      th +
+      geom_col(aes(x = gene_symbol, y = logFC, fill = log10(FDR))) +
+      geom_hline(yintercept = 0, colour = "grey", alpha = 0.5) +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
+      labs(x = NULL, y = "log FC", fill = "log FDR")
+
+    plot_grid(g1, g2, ncol = 1, rel_heights = c(1.5, 1), align = "v")
   })
 }
 
