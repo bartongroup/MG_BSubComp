@@ -8,20 +8,27 @@ read_bedgraphs <- function(config, meta) {
     list_rbind()
 }
 
-plot_bedgraphs_region <- function(bg, .chr, .start, .end) {
-  bg |>
+plot_bedgraphs_region <- function(bg, .chr, .start, .end, log_scale = FALSE) {
+  b <- bg |>
     mutate(pos = start / 1e6) |> 
     filter(chr == .chr & pos >= .start & pos <= .end) |> 
-    select(-c(chr, start, end)) |> 
-  ggplot() +
+    select(-c(chr, start, end))
+  ylab <- "Count"
+  if(log_scale) {
+    b <- b |>
+      mutate(score = log10(score + 1))
+    ylab = expression(log[10]~(count+1))
+  }
+  b |> 
+    ggplot() +
     theme_bw() +
     theme(
       panel.grid = element_blank(),
     ) +
-    geom_step(aes(x=pos, y=score)) +
+    geom_step(aes(x = pos, y = score)) +
     facet_grid(sample ~ .) +
     scale_y_continuous(expand = expansion(mult = c(0, 0.03))) +
-    labs(x = NULL, y = "Count")
+    labs(x = "Position (Mb)", y = ylab)
 }
 
 

@@ -2,7 +2,7 @@ ggheatmap <- function(tab, order.col = TRUE, order.row = TRUE, dendro.line.size 
                       text.size = 12, legend.text.size = 12, legend.name = "value",
                       dist.method = "euclidean", clust.method = "complete", title = NULL,
                       with.y.text = FALSE, with.x.text = TRUE, palette = "distiller",
-                      max.fc = NULL) {
+                      max.fc = NULL, dendro.row.width = 0.2, dendro.col.width = 0.2) {
   
   d <- tab |>
     as_tibble(rownames = "rowname") |>
@@ -78,7 +78,7 @@ ggheatmap <- function(tab, order.col = TRUE, order.row = TRUE, dendro.line.size 
       geom_segment(data = ggdendro::segment(dendro_data_row), aes(y = -y, x = x, xend = xend, yend = -yend), linewidth = dendro.line.size) +
       coord_flip()
     final_plot <- final_plot |>
-      cowplot::insert_yaxis_grob(dendro_row, grid::unit(0.2, "null"), position = "left")
+      cowplot::insert_yaxis_grob(dendro_row, grid::unit(dendro.row.width, "null"), position = "left")
   }
   
   if (order.col) {
@@ -86,7 +86,7 @@ ggheatmap <- function(tab, order.col = TRUE, order.row = TRUE, dendro.line.size 
     dendro_col <- cowplot::axis_canvas(heat_plot, axis = "x") +
       geom_segment(data = ggdendro::segment(dendro_data_col), aes(x = x, y = y, xend = xend, yend = yend), linewidth = dendro.line.size)
     final_plot <- final_plot |>
-      cowplot::insert_xaxis_grob(dendro_col, grid::unit(0.2, "null"), position = "top")
+      cowplot::insert_xaxis_grob(dendro_col, grid::unit(dendro.col.width, "null"), position = "top")
   }
   
   ggdraw(final_plot)

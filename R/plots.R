@@ -923,7 +923,7 @@ plot_fc_comparison <- function(res, groupvar = "contrast") {
 
 plot_fc_heatmap <- function(set, what = "rlog", min_n = 3, max_fc = 2,
                             id_sel = NULL, sample_sel = NULL, order_col = TRUE,
-                            with_x_text = FALSE, with_y_text = FALSE) {
+                            with_x_text = FALSE, with_y_text = FALSE, text_size = 12) {
   d <- set$dat |> 
     mutate(val = get(what))
   if (!is.null(sample_sel))
@@ -951,7 +951,9 @@ plot_fc_heatmap <- function(set, what = "rlog", min_n = 3, max_fc = 2,
     pull(sample)
   tab <- tab[, smpls]
   
-  ggheatmap(tab, order.col = order_col, with.x.text = with_x_text, with.y.text = with_y_text, dendro.line.size = 0.2, max.fc = max_fc, legend.name = "logFC")
+  ggheatmap(tab, order.col = order_col, with.x.text = with_x_text, with.y.text = with_y_text,
+            dendro.line.size = 0.2, max.fc = max_fc, legend.name = "logFC",
+            dendro.row.width = 0.3, dendro.col.width = 0.1, text.size = text_size)
 }
 
 
@@ -1196,5 +1198,27 @@ compare_de_genes_operons <- function(de, de_ops, ctr, fdr_limit = 0.01, logfc_li
       genes_in_de = str_c(gene[!is.na(de_gene)], collapse = ", "),
       genes_not_in = str_c(gene[is.na(de_gene)], collapse = ", ")
     )
+}
+
+
+plot_forward_reverse <- function(fwd_rev, gids, ncol = 2) {
+  d <- fwd_rev |> 
+    filter(id %in% gids) 
+  mx <- max(c(d$fwd_count, d$rev_count))
+  mn <- min(c(d$fwd_count, d$rev_count))
+    
+  d |> 
+    ggplot(aes(x = fwd_count, y = rev_count / (rev_count + fwd_count), colour = group)) +
+    th +
+    geom_hline(yintercept = 0, colour = "grey70") +
+    geom_hline(yintercept = 1, colour = "grey70") +
+    geom_point() +
+    scale_colour_manual(values = okabe_ito_palette) +
+    facet_wrap(~gene_symbol, ncol = ncol) +
+    scale_x_log10(labels = scientific_10) +
+    #scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+    #scale_x_log10(limits = c(mn, mx)) +
+    #scale_y_log10(limits = c(mn, mx)) +
+    labs(x = "Count of forward strand", y = "Proportion of counts on reverse strand")
 }
 

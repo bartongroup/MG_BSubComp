@@ -135,7 +135,7 @@ parse_one_star_count <- function(file, smpl, column = 2, fix_names_fun = NULL) {
 #'   NULL.
 #' @return A list containing the data in both tab (wide matrix) and dat (long
 #'   tibble) formats, along with metadata and selected row identifiers.
-parse_star_counts <- function(path, meta, column = 2, suffix = ".txt", fix_names_fun) {
+parse_star_counts <- function(path, meta, column = 2, suffix = ".txt", fix_names_fun = NULL) {
   s2n <- set_names(meta$sample, meta$raw_sample)
   dat <- meta$raw_sample |> 
     map(~parse_one_star_count(file.path(path, paste0(.x, suffix)), .x, column, fix_names_fun)) |> 
@@ -908,11 +908,10 @@ write_counts <- function(set, file, what = "count_norm") {
 group_counts_operons <- function(set, operons, min_count = 10) {
   g2d <- set$genes |> 
     select(id, gene_description = description) |> 
-    drop_na() |> 
+    mutate(gene_description = replace_na(gene_description, "N/A")) |> 
     distinct()
   ops <- operons |> 
-    left_join(g2d, by = "id") |> 
-    filter(!is.na(id)) |> 
+    inner_join(g2d, by = "id") |> 
     group_by(operon) |> 
     mutate(description = str_c(gene_description, collapse = "; ")) |> 
     select(-gene_description) |> 
@@ -920,7 +919,7 @@ group_counts_operons <- function(set, operons, min_count = 10) {
   dat <- operons |> 
     select(id, operon) |> 
     drop_na() |> 
-    left_join(set$dat, by = "id", relationship = "many-to-many") |> 
+    inner_join(set$dat, by = "id", relationship = "many-to-many") |> 
     group_by(operon, sample) |>
     summarise(count = sum(count))  |> 
     ungroup() |> 

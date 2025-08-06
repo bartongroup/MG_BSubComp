@@ -13,3 +13,4 @@ ggrepel
 fgsea
 fenr
 rtracklayer
+Biostrings

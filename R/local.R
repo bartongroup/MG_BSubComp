@@ -137,3 +137,12 @@ rename_toxan_genes_in_set <- function(set, toxan) {
   set$genes <- rename_toxan_genes(set$genes, toxan)
   set
 }
+
+
+get_forward_reverse <- function(star, star_opposite) {
+  full_join(star$dat, star_opposite$dat, by = join_by(id, sample)) |> 
+    select(id, sample, fwd_count = count.x, rev_count = count.y) |> 
+    mutate(across(c(fwd_count, rev_count), ~replace_na(.x, 0))) |> 
+    left_join(select(star$metadata, sample, group), by = "sample") |> 
+    left_join(select(star$genes, id, gene_symbol), by = "id")
+}

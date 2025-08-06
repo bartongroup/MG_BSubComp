@@ -6,7 +6,7 @@
 #
 # mamba create --name bsub_comp
 # mamba activate bsub_comp
-# mamba install snakemake=7.32.4 fastqc multiqc samtools bedtools star fastp fastq-screen drmaa qualimap ribodetector deeptools rseqc subread
+# mamba install snakemake=7.32.4 fastqc multiqc samtools bedtools star fastp fastq-screen drmaa qualimap ribodetector deeptools rseqc subread r-base r-dplyr r-tibble r-tidyr r-purrr r-stringr r-readr bioconductor-biostrings
 #
 ### To recreate the environment
 #
@@ -19,6 +19,7 @@ configfile: 'config/config.yaml'
 
 genome_url =  config['genome_url']
 gtf_url =  config['gtf_url']
+subtiwiki_file = config['subtiwiki_file']
 
 # Local
 
@@ -31,6 +32,8 @@ bed_file_name = gtf_file_name.rsplit('.', 1)[0] + '.bed'
 genome_file = os.path.join(genome_dir, genome_file_name)
 gtf_file = os.path.join(genome_dir, gtf_file_name)
 bed_file = os.path.join(genome_dir, bed_file_name)
+ncrna_gtf_file = os.path.join(genome_dir, "ncrna.gtf")
+merged_gtf_file = os.path.join(genome_dir, "merged.gtf")
 
 genome_index = genome_file + '.fai'
 genome_size_file = genome_file + '.txt'
@@ -203,11 +206,26 @@ rule load_genome:
     shell:
         'wget {genome_url} -O - | gunzip -c > {genome_file}'
 
-
 rule load_gtf:
     output: gtf_file
     shell:
         'wget {gtf_url} -O - | gunzip -c > {gtf_file}'
+
+rule make_ncrna_gtf:
+    input:
+        genome = genome_file,
+        subtiwiki = subtiwiki_file
+    output: ncrna_gtf_file
+    shell:
+        'Rscript ./subtiwiki/make_ncrna_gtf.R {input.genome} {input.subtiwiki} {output}'
+
+rule merge_gtf:
+    input:
+        ncbi = gtf_file,
+        ncrna = ncrna_gtf_file
+    output: merged_gtf_file
+    shell:
+        'cat {input.ncbi} {input.ncrna} > {output}'
 
 rule convert_gft_to_bed:
     input: gtf_file
@@ -243,8 +261,7 @@ rule size_genome:
 
 rule star_index:
     input:
-      genome = genome_file,
-      gtf = gtf_file
+      genome = genome_file
     output: star_index_test_file
     threads: 24
     shell:
@@ -264,7 +281,7 @@ rule star_mapping:
         R1 = 'fastq_clean/{sample}_R1.fastq.gz',
         R2 = 'fastq_clean/{sample}_R2.fastq.gz',
         testfile = star_index_test_file,
-        gtf = gtf_file
+        gtf = merged_gtf_file
     output:
         bam = 'bam/{sample}.bam',
         readcount = 'readcount/{sample}.txt',
@@ -323,7 +340,7 @@ rule check_strandedness:
 
 rule subread_counts:
     input:
-        gtf = gtf_file,
+        gtf = merged_gtf_file,
         bam = 'bam/{sample}.bam'
     output: 'subread/{sample}.txt'
     shell:
@@ -362,7 +379,7 @@ rule qualimap_rnaseq:
     input:
         bam = 'bam/{sample}.bam',
         bai = 'bam/{sample}.bam.bai',
-        gtf = gtf_file
+        gtf = merged_gtf_file
     output: 'qm/rnaseq/{sample}/rnaseq_qc_results.txt'
     params:
         mem = '24G'

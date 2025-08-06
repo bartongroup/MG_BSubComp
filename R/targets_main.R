@@ -10,15 +10,17 @@ targets_main <- function() {
   )
 
   get_annotations = tar_plan(
-    gtf = rtracklayer::import(yaml$gtf_url),
+    genome = Biostrings::readDNAStringSet(config$genome_file),
+    gtf = rtracklayer::import(config$gtf_file),
     # Following https://pmc.ncbi.nlm.nih.gov/articles/PMC3754741,
     # plasmid GFF was downloaded from https://ncbi.nlm.nih.gov/nucleotide/KF365913
-    gff_KF365913 = rtracklayer::import("info/KF365913.gff3"),
+    gff_KF365913 = rtracklayer::import(config$KF365913_file),
     genes_gtf = get_gene_annotations_from_gtf(gtf),
     chromosomes = genes_gtf$chr |> unique() |> as.character(),
     plasmid_annot = ncbi_plasmid_annotations(genes_gtf, gff_KF365913),
     genes = annotate_plasmid_genes(genes_gtf, plasmid_annot),
-    sw_genes = get_subtiwiki_genes(),
+    # Downloaded from https://subtiwiki.uni-goettingen.de/v5/data-export, using full export
+    sw_genes = readr::read_csv(config$subti_wiki_file),
     sw_gene_match = match_genes_by_coordinates(genes, sw_genes, max_diff = 50),
     operons = get_operons(genes),
     terms = get_functional_terms(gtf, kg_spec = "bsu"),
@@ -28,6 +30,8 @@ targets_main <- function() {
   qc <- tar_plan(
     fastq_len = read_fastq_lengths(config, metadata),
     fig_ribo_prop = plot_ribo_proportion(fastq_len),
+
+    tbl_strandedness = parse_strandedness(config, metadata),
     
     fscrn = parse_fscreens(config, metadata),
     qcs = parse_qcs(config, metadata, paired = TRUE),
@@ -46,6 +50,7 @@ targets_main <- function() {
 
    star <- tar_plan(
     star = read_and_process_star(config, metadata, genes, min_count = 10),
+    star_opposite = parse_star_counts(file.path(config$data_path, config$dir$read_count), metadata, column = 3),
     bg = read_bedgraphs(config, metadata),
     
     tab_star_log = star$star_log,
@@ -56,7 +61,7 @@ targets_main <- function() {
     example_count_file = one_count_file(config, metadata, 1),
     fig_star_sense = plot_star_sense(example_count_file),
 
-    fig_bedgraphs = plot_bedgraphs_region(bg, "NZ_CP020102.1", 0, Inf)
+    fig_bedgraphs = plot_bedgraphs_region(bg, "NZ_CP020102.1", 0, Inf, log_scale = TRUE)
   )
   
   diff_expr <- tar_plan(
@@ -89,11 +94,14 @@ targets_main <- function() {
 
     gse_ops = fgsea_all_terms(de_ops, fterms_ops, rank_expr = "-logFC * log10(PValue)"),
 
-    top_sig_ops = de_ops |> dplyr::filter(id %in% de_operons$id) |> dplyr::arrange(PValue) |> head(50) |> dplyr::pull(id),
-    fig_top_sig_ops_heatmap = plot_fc_heatmap(star_ops, id_sel = top_sig_ops, max_fc = NA, with_x_text = TRUE, with_y_text = TRUE)
+    top_sig_ops = de_ops |> dplyr::filter(id %in% de_operons$id) |> dplyr::arrange(PValue) |> dplyr::pull(id),
+    fig_top_sig_ops_heatmap = plot_fc_heatmap(star_ops, id_sel = top_sig_ops, max_fc = NA, with_x_text = TRUE, with_y_text = TRUE, text_size = 10)
   )
 
   for_report <- tar_plan(
+    forward_reverse = get_forward_reverse(star, star_opposite),
+    fig_fwd_rev_example = plot_forward_reverse(forward_reverse, c("S1449", "S1450", "B4U62_RS20160", "B4U62_RS20165", "B4U62_RS20155")),
+
     rrna_genes = genes |> dplyr::filter(biotype == "rRNA") |> dplyr::pull(id),
     fig_mut_1_5 = plot_pair_outliers(star, c("mut_1", "mut_5"), genes, amp = 2.5, tau = 4, sel = rrna_genes),
     fig_mut_1_2 = plot_pair_outliers(star, c("mut_1", "mut_2"), genes, amp = 2.5, tau = 4, sel = rrna_genes),
@@ -118,6 +126,10 @@ targets_main <- function() {
     sav_gse_ops = write_table(gsea_ops),
 
     cmp_ncbi_sw = compare_ncbi_sw_genes(genes, sw_genes, limit_line = 50)
+  )
+
+  for_manuscript <- tar_plan(
+    pdf_volcano_toxins = mn_plot_volcano_toxins(de_toxan, toxan) |> gp("volcano_toxins", 4, 4)
   )
 
   toxins_and_antibiotics <- tar_plan(
@@ -153,6 +165,7 @@ targets_main <- function() {
     group_operons,
     toxins_and_antibiotics,
     for_report,
+    for_manuscript,
     shiny
   )
 }

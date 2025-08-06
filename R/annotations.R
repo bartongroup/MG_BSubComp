@@ -88,9 +88,6 @@ prepare_terms_fenr <- function(terms, all_features) {
     set_names(ontologies)
 }
 
-get_subtiwiki_genes <- function() {
-  read_csv("info/2025-07-21_09-26-20_subti_wiki_export_genes.csv")
-}
 
 # Download operon clustering from SubtiWiki
 get_operons <- function(genes) {
@@ -143,7 +140,25 @@ group_terms_operons <- function(terms, operons) {
     set_names(ontologies)
 }
 
-
+#' Annotate plasmid genes
+#'
+#' Annotate plasmid genes in the NCBI GTF with gene symbols from
+#'  https://pmc.ncbi.nlm.nih.gov/articles/PMC3754741.
+#' 
+#' Here we assume that the relative gene coordinates are the same in both annotations, only 
+#' the origin is different. Hence, the "anchor" gene has to be provided, a gene for which locus ID and
+#' gene symbol are know. It will be used to link the two annotations.
+#' 
+#' 
+#' @param genes Gene information from NCBI, extracted from a GTF file, lacking gene symbols for the plasmid.
+#' @param gff GRanges object representing the GFF file from https://pmc.ncbi.nlm.nih.gov/articles/PMC3754741.
+#' @param anchor_gene A named string with a known gene, linking its id to the gene symbol.
+#' @param len Length of the plasmid.
+#'
+#' @returns
+#'
+#' @export
+#' @examples
 ncbi_plasmid_annotations <- function(genes, gff, anchor_gene = c("B4U62_RS22265" = "rapP"), len = 84215) {
   g <- genes |> 
     filter(chr == "NZ_CP020103.1")
@@ -151,13 +166,17 @@ ncbi_plasmid_annotations <- function(genes, gff, anchor_gene = c("B4U62_RS22265"
     as_tibble() |> 
     filter(type == "gene") |> 
     select(start, Name)
+  # Anchor gene start in NCBI
   s1 <- g |> 
     filter(id == names(anchor_gene)) |> 
     pull(start)
+  # Anchor gene start in GFF
   s2 <- f |> 
     filter(Name == anchor_gene) |> 
     pull(start)
+  # Offset between origins in the two annotations
   dif <- s2 - s1
+  # Add gene symbols to NCBI, merge by gene start with offset
   g |> 
     mutate(s = start + dif) |> 
     mutate(s = if_else(s > len, s - len, s))  |> 
@@ -172,4 +191,7 @@ annotate_plasmid_genes <- function(genes, plasmid_annot) {
     filter(chr == "NZ_CP020102.1")
   bind_rows(chrom, plasmid_annot)
 }
+
+
+
 

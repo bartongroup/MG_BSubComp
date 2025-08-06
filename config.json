@@ -2,6 +2,10 @@
   "data_path" : "rna_seq",
   "yaml_file" : "rna_seq/config/config.yaml",
   "metadata_file" : "info/EGP023_25_B1-samplelist-26062025.xlsx",
+  "genome_file" : "rna_seq/genome/GCF_002055965.1_ASM205596v1_genomic.fna",
+  "gtf_file" : "rna_seq/genome/merged.gtf",
+  "KF365913_file" : "info/KF365913.gff3",
+  "subti_wiki_file" : "info/2025-07-21_09-26-20_subti_wiki_export_genes.csv",
   "dir" : {
     "fastq_trimmed" : "fastq_trimmed",
     "fastq_clean" : "fastq_clean",

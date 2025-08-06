@@ -1,4 +1,6 @@
 info/*
+genome/*.fna
+genome/merged.gtf
 fastq_trimmed/*.txt
 fastq_clean/*.txt
 fscreen/*.txt
@@ -10,6 +12,7 @@ bedgraph/*
 starmap/*.final.out
 strand/*
 subread/*
+subtiwiki/*
 fastq_screen.conf
 Snakefile
 environment.txt

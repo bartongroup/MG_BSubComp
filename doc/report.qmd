@@ -119,7 +119,7 @@ tar_read(metadata) |>
 
 # Data analysis
 
-The data analysis was conducted in two stages. The first stage was performed on the Life Sciences cluster using a Snakemake script. This stage included the cleaning, quality control, and mapping of FASTQ files. The software versions used in this stage are listed in @tbl-software. In the second stage, the data were imported into Positron and further processed using R on a MacBook Pro. The versions of the R packages utilized are provided in @sec-session-info. All code used in this project is available on [GitHub](https://github.com/bartongroup/MG_BSubComp).
+The data analysis was conducted in two stages. The first stage was performed on the Life Sciences cluster using a Snakemake script. This stage included the cleaning, quality control, and mapping of FASTQ files. The software versions used in this stage are listed in @tbl-software. In the second stage, the data were imported into Positron and further processed using R on a MacBook Pro. The versions of the R packages utilized are provided in @sec-session-info. All code used in this project is available on [GitHub](https://github.com/bartongroup/MG_BSubComp). The results of these analyses are presented below.
 
 ```{r}
 #| label: tbl-software
@@ -131,6 +131,54 @@ tar_read(software_versions) |>
     Software ~ px(150)
   ) 
 ```
+
+# Genome and annotations
+
+Bacillus subtilis NCIB 3610 [genome assembly ASM205596v1](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_002055965.1/) has been downloaded from NCBI (genome sequence and GTF annotations). It consists of two sequences, with GeneBank locus ID CP020102.1 for the chromosome and CP020103.1 for the plasmid. The lengths of the chromosome and plasmid are 4,215,607 and 84,215 bp, respectively.
+
+## Annotating plasmid
+
+Alas, the NCBI genome does not come with gene names in the plasmid. All genes in the plasmid are annotated only by a locus ID, e.g. B4U62_RS22265. [Konkol, Blair and Kearns (2013)](https://pmc.ncbi.nlm.nih.gov/articles/PMC3754741/) annotated genes in the plasmid. Quote: "We have annotated and submitted to GenBank 102 genes carried by pBS32, named by using the following nomenclature: zpxX, where the x's are sequential letters clockwise from the repN gene encoding an essential replication protein (see GenBank accession number [KF365913](https://ncbi.nlm.nih.gov/nucleotide/KF365913) for individual gene annotations). Whereas genes of unknown function in the chromosome begin with the letter “y,” and genes carried by chromosomal prophages begin with the letter “x,” we chose the letter “z” to indicate genes of unknown function carried on the endogenous plasmid."
+
+These annotations have been downloaded from GenBank and applied to the plasmid genes. One of the genes included in the new annotations is B4U62_RS22265, annotated as *rapP*.
+
+## Annotating non-coding RNA
+
+*SubtiWiki* contains more than 1500 features named *Sn*, where *n* is an integer, for example *S1450*. These represent non-coding RNAs, often overlapping with coding genes (@fig-s1450).
+
+The ncRNA annotations were added to the NCBI GTF used for this analysis in the following way. Sequences of ncRNAs were extracted from *SubtiWiki*, in the form of a CSV file (we struggled with the *SubtiWiki's* API, so a snapshot file downloaded on 2025-07-21 was used). Each sequence was mapped to the NCBI genome, allowing for up to 2 mismatches and indels. All sequences, except one, were mapped successfully. The coordinates of the mapped ncRNAs were added to the GTF file, and this combined GTF was used for read mapping and the downstream analysis.
+
+### Examples of ncRNA expression
+
+@fig-s1450 shows genomic locus around *S1450*, which is overlapping with  *ywhK* and *ywhL* on the opposite strand. @fig-igv-s1450 shows the read coverage of this region. @fig-fwd-rev-example shows the proportion of reverse counts as a function of the gene expression, for the genes illustrated in @fig-s1450. The distinction between counts on the forward and reverse strands is made possible thanks to the stranded protocol, separating reads aligning to the same strand as the gene (forward) and the opposite strand to the gene (reverse). Only reads on the forward strand can originate from the transcript expressed by a given gene. Therefore, a high proportion of the counts on the reverse strand indicate the expression of an overlapping gene on the opposite strand to a given gene.
+
+The expression from *S1450* is low (as shown on its forward strand counts) and majority of counts (in particular in the mutant) are on the reverse strand, therefore they originate from overlapping genes *ywhL* and *ywhK*.
+
+
+```{r, out.width="100%"}
+#| label: fig-s1450
+#| fig-cap: An example of a non-coding RNA *S1450*, overlapping with two protein coding genes *ywhL* and *ywhK*, but on the opposite strand.
+knitr::include_graphics("images/S1449_S1450.png")
+```
+
+```{r, out.width="100%"}
+#| label: fig-igv-s1450
+#| fig-cap: Read coverage for the region illustrated in @fig-s1450, for sample 1 (control, top panel) and sample 6 (mutant, bottom panel).
+knitr::include_graphics("images/igv_example.png")
+```
+
+
+```{r}
+#| label: fig-fwd-rev-example
+#| fig-cap: Proportion of reads on the reverse strand (on the gene) as a function of the total read count on the forward strand (expression) for genes shown in @fig-s1450. *ywhK*, *ywhL* and *S1449* are highly differentially expressed with high expression in the mutant, but very low proportion of counts registered on the reverse strand. *albG* and *S1450* have low expression in both conditions and high proportion of the reverse strand counts, coming from the opposite strand genes. Presumably, *ywhK*, *ywhL* and *S1449* for an operon.
+#| fig-width: 8
+#| fig-height: 10
+tar_read(fig_fwd_rev_example) 
+```
+
+Just next *S1450* lies *S1449*, which can be seen in @fig-s1450, on the reverse strand. It looks like it might be a part of the operon *ywh*. And indeed, @fig-fwd-rev-example shows that *S1449* is highly differentially expressed between mutant and control, with low fraction of the reverse strand reads, while the overlapping *albG* is lowly expressed in both conditions. We can also see in @fig-top-sig that expression of *ywhK*, *ywhL* and *S1449* is highly correlated across all samples, so, presumably, they are belong to the same operon.
+
+We note that non-coding genes with names starting with S are largely missing from predicted operons in *SubtiWiki* database. Our examples demonstrates that at least some of them should be assigned to operons.
 
 
 # Sequencing and mapping
@@ -188,13 +236,6 @@ tar_read(fig_read_qual_clust)
 
 [The full MultiQC report](https://www.compbio.dundee.ac.uk/user/mgierlinski/bsub_comp/doc/multiqc.html).
 
-## Genome and annotations
-
-Bacillus subtilis NCIB 3610 [genome assembly ASM205596v1](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_002055965.1/) has been downloaded from NCBI (genome sequence and GTF annotations). It consists of two sequences, with GeneBank locus ID CP020102.1 for the chromosome and CP020103.1 for the plasmid. The lengths of the chromosome and plasmid are 4,215,607 and 84,215 bp, respectively.
-
-Alas, the NCBI genome does not come with gene names in the plasmid. All genes in the plasmid are annotated only by a locus ID, e.g. B4U62_RS22265. [Konkol, Blair and Kearns (2013)](https://pmc.ncbi.nlm.nih.gov/articles/PMC3754741/) annotated genes in the plasmid. Quote: "We have annotated and submitted to GenBank 102 genes carried by pBS32, named by using the following nomenclature: zpxX, where the x's are sequential letters clockwise from the repN gene encoding an essential replication protein (see GenBank accession number [KF365913](https://ncbi.nlm.nih.gov/nucleotide/KF365913) for individual gene annotations). Whereas genes of unknown function in the chromosome begin with the letter “y,” and genes carried by chromosomal prophages begin with the letter “x,” we chose the letter “z” to indicate genes of unknown function carried on the endogenous plasmid."
-
-These annotations have been downloaded from GenBank and applied to the plasmid genes. One of the genes included in the new annotations is B4U62_RS22265, annotated as *rapP*.
 
 ## Mapping
 
@@ -280,7 +321,7 @@ knitr::include_graphics("../fig/sample_quasirandom.png")
 #| fig-cap: Read pileup across chromosome NZ_CP020102.1 for all samples, in 1000-bp bins.
 #| fig-width: 8
 #| fig-height: 12
-tar_read(fig_bedgraphs)
+tar_read(fig_bedgraphs) 
 ```
 
 ## PCA, clustering and correlation
@@ -404,9 +445,9 @@ cowplot::plot_grid(figs_de_ops$volcano, figs_de_ops$ma)
 
 ```{r}
 #| label: fig-top-sig-ops
-#| fig-cap: Heatmap showing relative change between conditions (rlog expression minus mean) for the top 50 DE operons.
+#| fig-cap: Heatmap showing relative change between conditions (rlog expression minus mean) for all of the DE operons.
 #| fig-width: 8
-#| fig-height: 10
+#| fig-height: 20
 tar_read(fig_top_sig_ops_heatmap) 
 ```
 
