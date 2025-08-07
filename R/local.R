@@ -19,7 +19,7 @@ read_toxins_and_antibiotics <- function(fname, genes, sw_genes, max_diff = 50,
 
   # match directly to NCBI genes
   tb_ncbi <- tb |> 
-    left_join(select(genes, id, gene_symbol, start, end))
+    left_join(select(genes, id, gene_symbol, start, end), by = join_by(gene_symbol))
 
   # missing from NCBI
   mis_ncbi <- tb_ncbi |> 
@@ -28,7 +28,7 @@ read_toxins_and_antibiotics <- function(fname, genes, sw_genes, max_diff = 50,
 
   # match SubtiWiki genes
   sw <- sw_genes |> 
-    select(id, name, synonyms, genomic_annotation.start, genomic_annotation.end)
+    select(id, name, synonyms, genomic_annotations.start, genomic_annotations.end)
   tb_sw <- mis_ncbi |> 
     left_join(sw, by = c("gene_symbol" = "name"))
 
@@ -79,7 +79,7 @@ match_genes_by_coordinates <- function(genes, sw, max_diff = 50) {
     filter(chr == "NZ_CP020102.1") |> 
     select(chr, start, end, id, gene_symbol)
   g2 <- sw |> 
-    select(sw_id = id, name, synonyms, start = genomic_annotation.start, end = genomic_annotation.end) |> 
+    select(sw_id = id, name, synonyms, start = genomic_annotations.start, end = genomic_annotations.end) |> 
     mutate(
       s_min = start - max_diff,
       s_max = start + max_diff,

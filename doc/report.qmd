@@ -117,7 +117,7 @@ tar_read(metadata) |>
   gt() 
 ```
 
-# Data analysis
+# Software
 
 The data analysis was conducted in two stages. The first stage was performed on the Life Sciences cluster using a Snakemake script. This stage included the cleaning, quality control, and mapping of FASTQ files. The software versions used in this stage are listed in @tbl-software. In the second stage, the data were imported into Positron and further processed using R on a MacBook Pro. The versions of the R packages utilized are provided in @sec-session-info. All code used in this project is available on [GitHub](https://github.com/bartongroup/MG_BSubComp). The results of these analyses are presented below.
 
@@ -140,19 +140,13 @@ Bacillus subtilis NCIB 3610 [genome assembly ASM205596v1](https://www.ncbi.nlm.n
 
 Alas, the NCBI genome does not come with gene names in the plasmid. All genes in the plasmid are annotated only by a locus ID, e.g. B4U62_RS22265. [Konkol, Blair and Kearns (2013)](https://pmc.ncbi.nlm.nih.gov/articles/PMC3754741/) annotated genes in the plasmid. Quote: "We have annotated and submitted to GenBank 102 genes carried by pBS32, named by using the following nomenclature: zpxX, where the x's are sequential letters clockwise from the repN gene encoding an essential replication protein (see GenBank accession number [KF365913](https://ncbi.nlm.nih.gov/nucleotide/KF365913) for individual gene annotations). Whereas genes of unknown function in the chromosome begin with the letter “y,” and genes carried by chromosomal prophages begin with the letter “x,” we chose the letter “z” to indicate genes of unknown function carried on the endogenous plasmid."
 
-These annotations have been downloaded from GenBank and applied to the plasmid genes. One of the genes included in the new annotations is B4U62_RS22265, annotated as *rapP*.
+These annotations have been downloaded from GenBank[^1] and applied to the plasmid genes. One of the genes included in the new annotations is B4U62_RS22265, annotated as *rapP*.
+
+[^1]: Alas, the GFF file is created on the fly, I don't know how to get it programmatically. We include the file in the GitHub repository for reproducibility.
 
 ## Annotating non-coding RNA
 
 *SubtiWiki* contains more than 1500 features named *Sn*, where *n* is an integer, for example *S1450*. These represent non-coding RNAs, often overlapping with coding genes (@fig-s1450).
-
-The ncRNA annotations were added to the NCBI GTF used for this analysis in the following way. Sequences of ncRNAs were extracted from *SubtiWiki*, in the form of a CSV file (we struggled with the *SubtiWiki's* API, so a snapshot file downloaded on 2025-07-21 was used). Each sequence was mapped to the NCBI genome, allowing for up to 2 mismatches and indels. All sequences, except one, were mapped successfully. The coordinates of the mapped ncRNAs were added to the GTF file, and this combined GTF was used for read mapping and the downstream analysis.
-
-### Examples of ncRNA expression
-
-@fig-s1450 shows genomic locus around *S1450*, which is overlapping with  *ywhK* and *ywhL* on the opposite strand. @fig-igv-s1450 shows the read coverage of this region. @fig-fwd-rev-example shows the proportion of reverse counts as a function of the gene expression, for the genes illustrated in @fig-s1450. The distinction between counts on the forward and reverse strands is made possible thanks to the stranded protocol, separating reads aligning to the same strand as the gene (forward) and the opposite strand to the gene (reverse). Only reads on the forward strand can originate from the transcript expressed by a given gene. Therefore, a high proportion of the counts on the reverse strand indicate the expression of an overlapping gene on the opposite strand to a given gene.
-
-The expression from *S1450* is low (as shown on its forward strand counts) and majority of counts (in particular in the mutant) are on the reverse strand, therefore they originate from overlapping genes *ywhL* and *ywhK*.
 
 
 ```{r, out.width="100%"}
@@ -160,6 +154,16 @@ The expression from *S1450* is low (as shown on its forward strand counts) and m
 #| fig-cap: An example of a non-coding RNA *S1450*, overlapping with two protein coding genes *ywhL* and *ywhK*, but on the opposite strand.
 knitr::include_graphics("images/S1449_S1450.png")
 ```
+
+
+The ncRNA annotations were added to the NCBI's GTF used for this analysis in the following way. Sequences of ncRNAs were extracted from *SubtiWiki*, using their APIs. Each sequence was mapped to the NCBI genome, allowing for up to 2 mismatches and indels. All sequences, except one, were mapped successfully. The coordinates of the mapped ncRNAs were added to the GTF file, and this combined GTF was used for read mapping and the downstream analysis.
+
+### Examples of ncRNA expression
+
+@fig-s1450 shows genomic locus around *S1450*, which is overlapping with  *ywhK* and *ywhL* on the opposite strand. @fig-igv-s1450 shows the read coverage of this region. @fig-fwd-rev-example shows the proportion of reverse counts as a function of the gene expression, for the genes illustrated in @fig-s1450. The distinction between counts on the forward and reverse strands is made possible thanks to the stranded protocol, separating reads aligning to the same strand as the gene (forward) and the opposite strand to the gene (reverse). Only reads on the forward strand can originate from the transcript expressed by a given gene. Therefore, a high proportion of the counts on the reverse strand indicate the expression of an overlapping gene on the opposite strand to a given gene.
+
+The expression from *S1450* is low (as shown on its forward strand counts) and majority of counts (in particular in the mutant) are on the reverse strand, therefore they originate from overlapping genes *ywhL* and *ywhK*.
+
 
 ```{r, out.width="100%"}
 #| label: fig-igv-s1450
@@ -281,7 +285,7 @@ tar_read(tbl_strandedness) |>
 ```{r}
 #| label: fig-star-log
 #| fig-cap: STAR mapping properties. 
-#| fig-width: 6
+#| fig-width: 4
 #| fig-height: 10
 tar_read(fig_star_log) 
 ```
@@ -306,7 +310,7 @@ This section contains general properties of mapped read counts.
 
 ## Expression distribution
 
-@fig-sample-dist shows raw read count distribution.
+@fig-sample-dist shows raw read count distribution. Again, sample `mut_5` shows lower count levels than the other samples.
 
 ```{r}
 #| label: fig-sample-dist
@@ -316,9 +320,11 @@ knitr::include_graphics("../fig/sample_quasirandom.png")
 
 ## Expression across the chromosome
 
+@fig-bedgraph-chrom shows the read mapping distribution across the chromosome, in logarithmic scale. Note that this plot can be used as a reference for future pilot experiments, to confirm correct mapping across the chromosome.
+
 ```{r}
 #| label: fig-bedgraph-chrom
-#| fig-cap: Read pileup across chromosome NZ_CP020102.1 for all samples, in 1000-bp bins.
+#| fig-cap: Read pileup across chromosome NZ_CP020102.1 for all samples, in 1000-bp bins. The low-count gaps below ~1 Mbp corresponds to the location of ribosomal genes, removed during sample preparation.
 #| fig-width: 8
 #| fig-height: 12
 tar_read(fig_bedgraphs) 
@@ -568,12 +574,21 @@ A list of `r n_toxan + 1` toxins and antibiotics was provided. At the first step
 
 ```{r}
 #| label: tbl-toxan-match
-#| tbl-cap: Results of matching toxins and antibiotics to the NCBI annotations. There are two different genes annotated as *ppsA* in NCBI. Here, they are distinguished by calling them *ppsA* and *ppsA.1*.
+#| tbl-cap: Results of matching toxins and antibiotics to the NCBI annotations. There are two different genes annotated as *ppsA* in NCBI. Here, they are distinguished by calling them *ppsA* and *ppsA.1*. The blue shading indicates genes with different names in the NCBI database than in the provided list, for which *SubtiWiki* annotations were used and then mapped by coordinates to the NCBI genes.
 toxan |> 
   mutate(ncbi_gene = tidyr::replace_na(ncbi_gene, "--")) |> 
-  select(chr, `Gene symbol` = gene_symbol, `Matching NCBI gene` = ncbi_gene, `NCBI id` = id, Start = start, End = end) |> 
+  select(chr, `Gene symbol` = gene_symbol, `Matching NCBI gene` = ncbi_gene, `NCBI id` = id, Start = start, End = end, ncbi) |> 
   group_by(chr) |> 
-  gt()
+  gt() |> 
+  tab_style(
+    style = list(
+      cell_fill(color = "lightskyblue1")
+    ),
+    locations = cells_body(
+      rows = ncbi == FALSE
+    )
+  ) |> 
+  cols_hide(ncbi)
 ```
 
 

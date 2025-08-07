@@ -19,8 +19,7 @@ targets_main <- function() {
     chromosomes = genes_gtf$chr |> unique() |> as.character(),
     plasmid_annot = ncbi_plasmid_annotations(genes_gtf, gff_KF365913),
     genes = annotate_plasmid_genes(genes_gtf, plasmid_annot),
-    # Downloaded from https://subtiwiki.uni-goettingen.de/v5/data-export, using full export
-    sw_genes = readr::read_csv(config$subti_wiki_file),
+    sw_genes = get_subtiwiki_genes(),
     sw_gene_match = match_genes_by_coordinates(genes, sw_genes, max_diff = 50),
     operons = get_operons(genes),
     terms = get_functional_terms(gtf, kg_spec = "bsu"),

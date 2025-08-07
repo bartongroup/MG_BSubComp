@@ -5,26 +5,57 @@ suppressPackageStartupMessages({
   library(purrr)
   library(stringr)
   library(readr)
+  library(httr2)
   library(Biostrings)
 })
 
-get_ncrna_sequences <- function(sw_genes) {
-  s <- sw_genes |> 
-    dplyr::filter(str_detect(name, "^S\\d+$")) |> 
+# Download ncRNA sequences from SubtiWiki
+get_ncrna_sequences <- function() {
+  # First, get all S* gene IDs
+  url <- "https://subtiwiki.uni-goettingen.de/v5/api/gene/"
+  req <- httr2::request(url)
+  resp <- httr2::req_perform(req)
+  js <- httr2::resp_body_json(resp)
+
+  data <- js$data
+  ids <- purrr::map(data, function(d) {
+    tibble::tibble(id = d$id, name = d$name)
+  }) |> 
+    purrr::list_rbind() |> 
+    dplyr::filter(stringr::str_detect(name, "^S\\d+$"))
+
+  # Download data for each gene
+  map(ids$id, function(id) {
+    qry <- str_glue("{url}{id}?representation=default")
+    req <- httr2::request(qry)
+    resp <- httr2::req_perform(req)
+    js <- httr2::resp_body_json(resp)
+    
+    js$data |> 
+      unlist() |> 
+      enframe() |>
+      filter(
+        name %in% c("name", "product") |
+        str_detect(name, "^genomic_annotations")
+      ) |> 
+      pivot_wider()
+  }, .progress = TRUE) |> 
+    list_rbind() |> 
     dplyr::select(
       name,
-      locus_tag = genomic_annotation.locus_tag,
+      locus_tag = genomic_annotations.locus_tag,
       product = product,
-      sw_start = genomic_annotation.start,
-      sw_end = genomic_annotation.end,
-      strand = genomic_annotation.orientation,
-      sequence = genomic_annotation.dna_sequence
+      sw_start = genomic_annotations.start,
+      sw_end = genomic_annotations.end,
+      strand = genomic_annotations.orientation,
+      sequence = genomic_annotations.dna_sequence
     ) |> 
       dplyr::mutate(strand = dplyr::if_else(strand == "Positive", "+", "-"))
 }
 
-match_ncrna_genome <- function(sw_genes, genome, max_mismatch = 0, with_indels = FALSE) {
-  ncrna <- get_ncrna_sequences(sw_genes)
+
+match_ncrna_genome <- function(genome, max_mismatch = 0, with_indels = FALSE) {
+  ncrna <- get_ncrna_sequences()
 
   ncrna |> 
     dplyr::mutate(
@@ -105,22 +136,18 @@ make_ncnra_gtf <- function(ncrna, gtf_file, seqname = "NZ_CP020102.1") {
 #######################################
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 3) {
-  stop("Three arguments must be supplied: genome_file, subtiwiki_file and output_file")
+if (length(args) != 2) {
+  stop("Two arguments must be supplied: genome_file and output_file")
 }
 
 #args <- c(
 #  "rna_seq/genome/GCF_002055965.1_ASM205596v1_genomic.fna",
-#  "info/2025-07-21_09-26-20_subti_wiki_export_genes.csv",
 #  "info/ncrna.gtf"
 #)
 
 genome_file <- args[1]
-subtiwiki_file <- args[2]
-output_file <- args[3]
+output_file <- args[2]
 
 genome <- Biostrings::readDNAStringSet(genome_file)
-sw_genes <- readr::read_csv(subtiwiki_file, guess_max = 6000, show_col_types = FALSE)
-
-ncrna <- match_ncrna_genome(sw_genes, genome[[1]], max_mismatch = 2, with_indels = TRUE)
+ncrna <- match_ncrna_genome(genome[[1]], max_mismatch = 2, with_indels = TRUE)
 sav_ncrna <- make_ncnra_gtf(ncrna, output_file)

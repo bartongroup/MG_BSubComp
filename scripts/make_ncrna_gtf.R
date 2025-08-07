@@ -13,12 +13,12 @@ get_ncrna_sequences <- function(sw_genes) {
     dplyr::filter(str_detect(name, "^S\\d+$")) |> 
     dplyr::select(
       name,
-      locus_tag = genomic_annotation.locus_tag,
+      locus_tag = genomic_annotations.locus_tag,
       product = product,
-      sw_start = genomic_annotation.start,
-      sw_end = genomic_annotation.end,
-      strand = genomic_annotation.orientation,
-      sequence = genomic_annotation.dna_sequence
+      sw_start = genomic_annotations.start,
+      sw_end = genomic_annotations.end,
+      strand = genomic_annotations.orientation,
+      sequence = genomic_annotations.dna_sequence
     ) |> 
       dplyr::mutate(strand = dplyr::if_else(strand == "Positive", "+", "-"))
 }

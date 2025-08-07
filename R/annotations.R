@@ -89,6 +89,42 @@ prepare_terms_fenr <- function(terms, all_features) {
 }
 
 
+# Download gene annotations from SubtiWiki
+
+get_subtiwiki_genes <- function() {
+  # First, get all gene IDs
+  url <- "https://subtiwiki.uni-goettingen.de/v5/api/gene/"
+  req <- httr2::request(url)
+  resp <- httr2::req_perform(req)
+  js <- httr2::resp_body_json(resp)
+
+  data <- js$data
+  ids <- map(data, function(d) {
+    tibble(id = d$id, name = d$name)
+  }) |> 
+    list_rbind()
+
+  gns <- map(ids$id, function(id) {
+    qry <- str_glue("{url}{id}?representation=default")
+    req <- httr2::request(qry)
+    resp <- httr2::req_perform(req)
+    js <- httr2::resp_body_json(resp)
+    
+    js$data |> 
+      unlist() |> 
+      enframe() |>
+      filter(
+        name %in% c("synonyms", "id", "legacy_id", "name", "description", "function", "product", "essential") |
+        str_detect(name, "^genomic_annotations")
+      ) |> 
+      pivot_wider()
+  }, .progress = TRUE) |> 
+    list_rbind() |> 
+    mutate(across(c(genomic_annotations.start, genomic_annotations.end), as.integer))
+}
+
+
+
 # Download operon clustering from SubtiWiki
 get_operons <- function(genes) {
   url <- "https://subtiwiki.uni-goettingen.de/v5/api/operon/"
