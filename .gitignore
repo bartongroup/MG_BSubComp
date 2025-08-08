@@ -19,4 +19,5 @@ rna_seq/*
 !rna_seq/subtiwiki/make_ncrna_gtf.R
 shiny/de_genes/data
 shiny/de_operons/data
+shiny/browser/data
 fig/

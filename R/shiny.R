@@ -39,3 +39,12 @@ save_data_for_shiny <- function(set, de, fterms, gse, what = "count_norm", shiny
   write_shiny_file(gse, shiny_dir = shiny_dir)
 }
 
+save_data_for_shiny_browser <- function(de, genes, shiny_dir = "shiny") {
+  de <- de |>
+    select(id, gene_symbol, log_fc = logFC, fdr = FDR)
+  genes <- genes |> 
+    select(id, gene_symbol, description, chr, start, end, strand)
+
+  write_shiny_file(de, shiny_dir = shiny_dir)
+  write_shiny_file(genes, shiny_dir = shiny_dir)
+}
