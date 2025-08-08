@@ -9,6 +9,8 @@ library(ggplot2)
 
 source("func.R")
 
+# Read data
+
 de <- qs_read("./data/de.qs")
 genes <- qs_read("./data/genes.qs")
 
@@ -25,9 +27,20 @@ chrlens <- map(chroms, function(chrom) {
   set_names(chroms)
   
 
+# Prepare UI
+
+fdr_limit_input <- numericInput(
+  inputId = "fdr_limit",
+  label = "FDR limit",
+  value = 0.01,
+  min = 0,
+  max = 1
+)
+
 card_de <- card(
   card_header(
     "DE results",
+    shiny::span(fdr_limit_input),
     class = "d-flex justify-content-between"
   ),
   card_body(
@@ -64,17 +77,17 @@ card_browser <- card(
 )
 
 
- ui <- page_fillable(
-    theme = bs_theme(bootswatch = "spacelab", spacer = "0.8rem") |>
-      bs_add_rules(".info-pop { max-width: 500px; background-color: #f0f9e8; }"),
-    title = "BROWSER",
+ui <- page_fillable(
+  theme = bs_theme(bootswatch = "spacelab", spacer = "0.8rem") |>
+          bs_add_rules(".info-pop { max-width: 500px; background-color: #f0f9e8; }"),
+  title = "BROWSER",
 
-    layout_columns(
-      col_widths = c(5, 7),
-      style = "height: 100%;", 
-      card_de,
-      card_browser
-    )  
+  layout_columns(
+    col_widths = c(5, 7),
+    style = "height: 100%;", 
+    card_de,
+    card_browser
+  )  
 )
 
 
@@ -85,7 +98,7 @@ server <- function(input, output, session) {
   })
  
   make_table <- shiny::reactive({
-    fdr_limit <- 0.01
+    fdr_limit <- input$fdr_limit
     req(fdr_limit)
     make_de_table(de, fdr_limit)
   })
