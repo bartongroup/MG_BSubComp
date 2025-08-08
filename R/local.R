@@ -139,10 +139,10 @@ rename_toxan_genes_in_set <- function(set, toxan) {
 }
 
 
-get_forward_reverse <- function(star, star_opposite) {
-  full_join(star$dat, star_opposite$dat, by = join_by(id, sample)) |> 
-    select(id, sample, fwd_count = count.x, rev_count = count.y) |> 
-    mutate(across(c(fwd_count, rev_count), ~replace_na(.x, 0))) |> 
+get_sense_antisense <- function(star, star_antisense) {
+  full_join(star$dat, star_antisense$dat, by = join_by(id, sample)) |> 
+    select(id, sample, sense_count = count.x, antisense_count = count.y) |> 
+    mutate(across(c(sense_count, antisense_count), ~replace_na(.x, 0))) |> 
     left_join(select(star$metadata, sample, group), by = "sample") |> 
     left_join(select(star$genes, id, gene_symbol), by = "id")
 }

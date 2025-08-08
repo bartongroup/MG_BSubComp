@@ -1,8 +1,9 @@
-expand_range <- function(range, margin = 0.5) {
-  width <- range[2] - range[1]
+expand_range <- function(range, chrlens, margin = 0.5) {
+  width <- range$end - range$start
   delta <- width * margin
-  range[1] <- range[1] - delta
-  range[2] <- range[2] + delta
+  chlen <- chrlens[[range$chr]]
+  range$start <- max(range$start - delta, 0)
+  range$end <- min(range$end + delta, chlen)
   range
 }
 
@@ -36,28 +37,35 @@ plot_browser <- function(genes, de, range, fdr_limit = 0.01) {
     mutate(
       sig = fdr < fdr_limit,
       sig = factor(sig, levels = c(FALSE, TRUE))
-    )
+    ) |> 
+    mutate(gene_symbol = if_else(is.na(gene_symbol), id, gene_symbol))
   mx <- max(abs(g$log_fc)) * 1.3
   dm <- tibble(
     dx = c(range$start, range$end),
     dy = c(-mx, mx)
   )
-  print(g)
-  print(dm)
 
+  ar <- g |> 
+    mutate(
+      xstart = if_else(strand == "+", start, end),
+      xend = if_else(strand == "+", end, start),
+      yarr = if_else(strand == "+", mx * 0.01, -mx * 0.01)
+    )
+  
   g |> 
     ggplot() +
     theme_bw() +
     theme(
       panel.grid = element_blank(),
-      axis.ticks.y = element_blank(),
-      ##axis.text.y = element_blank(),
+      axis.text = element_text(size = 12),
       legend.position = "none"
     ) +
-    geom_rect(aes(xmin = start, xmax = end, ymin = 0, ymax = log_fc, fill = sig), alpha = 0.6, colour = "black") +
+    geom_rect(aes(xmin = start, xmax = end, ymin = 0, ymax = log_fc, fill = sig), alpha = 0.6, colour = "black", linewidth = 0.3) +
     geom_text(aes(label = gene_symbol, x = (start + end) / 2, y = log_fc, vjust = -sign(log_fc) + 0.5)) +
     geom_blank(data = dm, aes(x = dx, y = dy)) +
-    geom_hline(yintercept = 0, linewidth = 1.2, alpha = 0.6) +
+    geom_hline(yintercept = 0, linewidth = 1.1, alpha = 0.6) +
+    geom_segment(data = ar, aes(x = xstart, xend = xend, y = yarr, yend = yarr, colour = strand), arrow = arrow(length = unit(0.1, "inches")), linewidth = 1.3) +
+    scale_colour_manual(values = c("royalblue3", "springgreen4", "grey"), drop = FALSE) +
     scale_fill_manual(values = c("grey80", "brown"), drop = FALSE) +
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(expand = c(0, 0)) +

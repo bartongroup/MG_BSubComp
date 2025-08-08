@@ -160,9 +160,9 @@ The ncRNA annotations were added to the NCBI's GTF used for this analysis in the
 
 ### Examples of ncRNA expression
 
-@fig-s1450 shows genomic locus around *S1450*, which is overlapping with  *ywhK* and *ywhL* on the opposite strand. @fig-igv-s1450 shows the read coverage of this region. @fig-fwd-rev-example shows the proportion of reverse counts as a function of the gene expression, for the genes illustrated in @fig-s1450. The distinction between counts on the forward and reverse strands is made possible thanks to the stranded protocol, separating reads aligning to the same strand as the gene (forward) and the opposite strand to the gene (reverse). Only reads on the forward strand can originate from the transcript expressed by a given gene. Therefore, a high proportion of the counts on the reverse strand indicate the expression of an overlapping gene on the opposite strand to a given gene.
+@fig-s1450 shows genomic locus around *S1450*, which is overlapping with  *ywhK* and *ywhL* on the opposite strand. @fig-igv-s1450 shows the read coverage of this region. @fig-sense-example shows the proportion of antisense counts as a function of the gene expression, for the genes illustrated in @fig-s1450. The distinction between counts on the sense and antisense strands is made possible thanks to the stranded protocol, separating reads aligning to the same strand as the gene (sense) and the opposite strand to the gene (antisense). Only reads on the sense strand can originate from the transcript expressed by a given gene. Therefore, a high proportion of antisense counts indicate the expression of an overlapping gene on the opposite strand to a given gene.
 
-The expression from *S1450* is low (as shown on its forward strand counts) and majority of counts (in particular in the mutant) are on the reverse strand, therefore they originate from overlapping genes *ywhL* and *ywhK*.
+The expression from *S1450* is low and majority of counts (in particular in the mutant) are on the antisense strand, therefore they originate from overlapping genes *ywhL* and *ywhK*.
 
 
 ```{r, out.width="100%"}
@@ -173,14 +173,14 @@ knitr::include_graphics("images/igv_example.png")
 
 
 ```{r}
-#| label: fig-fwd-rev-example
-#| fig-cap: Proportion of reads on the reverse strand (on the gene) as a function of the total read count on the forward strand (expression) for genes shown in @fig-s1450. *ywhK*, *ywhL* and *S1449* are highly differentially expressed with high expression in the mutant, but very low proportion of counts registered on the reverse strand. *albG* and *S1450* have low expression in both conditions and high proportion of the reverse strand counts, coming from the opposite strand genes. Presumably, *ywhK*, *ywhL* and *S1449* for an operon.
+#| label: fig-sense-example
+#| fig-cap: Proportion of reads on the antisense strand as a function of the total read count on the sense strand (expression) for genes shown in @fig-s1450. *ywhK*, *ywhL* and *S1449* are highly differentially expressed with high expression in the mutant, but very low proportion of counts registered on the antisense strand. *albG* and *S1450* have low expression in both conditions and high proportion of the antisense strand counts, coming from the opposite strand genes. Presumably, *ywhK*, *ywhL* and *S1449* form an operon.
 #| fig-width: 8
 #| fig-height: 10
-tar_read(fig_fwd_rev_example) 
+tar_read(fig_sense_example)
 ```
 
-Just next *S1450* lies *S1449*, which can be seen in @fig-s1450, on the reverse strand. It looks like it might be a part of the operon *ywh*. And indeed, @fig-fwd-rev-example shows that *S1449* is highly differentially expressed between mutant and control, with low fraction of the reverse strand reads, while the overlapping *albG* is lowly expressed in both conditions. We can also see in @fig-top-sig that expression of *ywhK*, *ywhL* and *S1449* is highly correlated across all samples, so, presumably, they are belong to the same operon.
+Just next *S1450* lies *S1449*, which can be seen in @fig-s1450, on the reverse strand. It looks like it might be a part of the operon *ywh*. And indeed, @fig-sense-example shows that *S1449* is highly differentially expressed between mutant and control, with low fraction of the antisense reads, while the overlapping *albG* is lowly expressed in both conditions. We can also see in @fig-top-sig that expression of *ywhK*, *ywhL* and *S1449* is highly correlated across all samples, so, presumably, they are belong to the same operon.
 
 We note that non-coding genes with names starting with S are largely missing from predicted operons in *SubtiWiki* database. Our examples demonstrates that at least some of them should be assigned to operons.
 

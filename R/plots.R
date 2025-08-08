@@ -1201,14 +1201,14 @@ compare_de_genes_operons <- function(de, de_ops, ctr, fdr_limit = 0.01, logfc_li
 }
 
 
-plot_forward_reverse <- function(fwd_rev, gids, ncol = 2) {
+plot_sense_antisense <- function(fwd_rev, gids, ncol = 2) {
   d <- fwd_rev |> 
     filter(id %in% gids) 
-  mx <- max(c(d$fwd_count, d$rev_count))
-  mn <- min(c(d$fwd_count, d$rev_count))
+  mx <- max(c(d$sense_count, d$antisense_count))
+  mn <- min(c(d$sense_count, d$antisense_count))
     
   d |> 
-    ggplot(aes(x = fwd_count, y = rev_count / (rev_count + fwd_count), colour = group)) +
+    ggplot(aes(x = sense_count, y = antisense_count / (antisense_count + sense_count), colour = group)) +
     th +
     geom_hline(yintercept = 0, colour = "grey70") +
     geom_hline(yintercept = 1, colour = "grey70") +
@@ -1219,6 +1219,6 @@ plot_forward_reverse <- function(fwd_rev, gids, ncol = 2) {
     #scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
     #scale_x_log10(limits = c(mn, mx)) +
     #scale_y_log10(limits = c(mn, mx)) +
-    labs(x = "Count of forward strand", y = "Proportion of counts on reverse strand")
+    labs(x = "Expression", y = "Proportion of antisense reads")
 }
 

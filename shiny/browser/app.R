@@ -4,6 +4,7 @@ library(qs2)
 library(dplyr)
 library(tibble)
 library(stringr)
+library(purrr)
 library(ggplot2)
 
 source("func.R")
@@ -14,6 +15,15 @@ genes <- qs_read("./data/genes.qs")
 de <- de |> 
   left_join(select(genes, id, description), by = "id")
 
+chroms <- unique(genes$chr)
+chrlens <- map(chroms, function(chrom) {
+  genes |> 
+    filter(chr == chrom) |> 
+    pull(end) |> 
+    max()
+}) |> 
+  set_names(chroms)
+  
 
 card_de <- card(
   card_header(
@@ -60,7 +70,7 @@ card_browser <- card(
     title = "BROWSER",
 
     layout_columns(
-      col_widths = c(4, 8),
+      col_widths = c(5, 7),
       style = "height: 100%;", 
       card_de,
       card_browser
@@ -85,7 +95,7 @@ server <- function(input, output, session) {
       select(-id)
     DT::datatable(
       dt,
-      options = list(paging = FALSE, dom = "t"),
+      options = list(paging = FALSE, dom = "ft"),
       style = "bootstrap",
       selection = "single",
       rownames = FALSE
@@ -103,8 +113,9 @@ server <- function(input, output, session) {
       ids <- dt[rows_sel, ]$id
       r <- genes |> 
         filter(id == ids)
-      range <- expand_range(c(r$start, r$end), margin = 0.5)
-      sr <- str_glue("{r$chr}:{range[1]}-{range[2]}")
+      range <- list(chr = r$chr, start = r$start, end = r$end) |> 
+        expand_range(chrlens, margin = 0.5)
+      sr <- make_str_range(range)
     }
     updateTextInput(session, "range_str", value = sr)
   })
@@ -155,10 +166,9 @@ server <- function(input, output, session) {
     crange <- input$range_str
     range <- parse_str_range(crange)
     width <- range$end - range$start
-    #range[1] <- min(range[1] + 0.2 * width, chlen)
-    #range[2] <- min(range[2] + 0.2 * width, chlen)
-    range$start <- range$start + 0.2 * width
-    range$end <- range$end + 0.2 * width
+    chlen <- chrlens[[range$chr]]
+    range$start <- min(range$start + 0.2 * width, chlen)
+    range$end <- min(range$end + 0.2 * width, chlen)
     sr <- make_str_range(range)
     updateTextInput(session, "range_str", value = sr)
   })
@@ -179,8 +189,9 @@ server <- function(input, output, session) {
     crange <- input$range_str
     range <- parse_str_range(crange)
     width <- range$end - range$start
-    range$start <- range$start - width / 4
-    range$end <- range$end + width / 4
+    chlen <- chrlens[[range$chr]]
+    range$start <- max(range$start - width / 4, 0)
+    range$end <- min(range$end + width / 4, chlen)
     sr <- make_str_range(range)
     updateTextInput(session, "range_str", value = sr)
   })

@@ -49,7 +49,7 @@ targets_main <- function() {
 
    star <- tar_plan(
     star = read_and_process_star(config, metadata, genes, min_count = 10),
-    star_opposite = parse_star_counts(file.path(config$data_path, config$dir$read_count), metadata, column = 3),
+    star_antisense = parse_star_counts(file.path(config$data_path, config$dir$read_count), metadata, column = 3),
     bg = read_bedgraphs(config, metadata),
     
     tab_star_log = star$star_log,
@@ -98,8 +98,8 @@ targets_main <- function() {
   )
 
   for_report <- tar_plan(
-    forward_reverse = get_forward_reverse(star, star_opposite),
-    fig_fwd_rev_example = plot_forward_reverse(forward_reverse, c("S1449", "S1450", "B4U62_RS20160", "B4U62_RS20165", "B4U62_RS20155")),
+    sense_antisense = get_sense_antisense(star, star_antisense),
+    fig_sense_example = plot_sense_antisense(sense_antisense, c("S1449", "S1450", "B4U62_RS20160", "B4U62_RS20165", "B4U62_RS20155")),
 
     rrna_genes = genes |> dplyr::filter(biotype == "rRNA") |> dplyr::pull(id),
     fig_mut_1_5 = plot_pair_outliers(star, c("mut_1", "mut_5"), genes, amp = 2.5, tau = 4, sel = rrna_genes),
