@@ -144,7 +144,7 @@ These annotations have been downloaded from GenBank[^1] and applied to the plasm
 
 [^1]: Alas, the GFF file is created on the fly, I don't know how to get it programmatically. We include the file in the GitHub repository for reproducibility.
 
-## Annotating non-coding RNA
+## Annotating non-coding RNA {#sec-annotating-ncrna}
 
 *SubtiWiki* contains more than 1500 features named *Sn*, where *n* is an integer, for example *S1450*. These represent non-coding RNAs, often overlapping with coding genes (@fig-s1450).
 
@@ -184,6 +184,42 @@ Just next *S1450* lies *S1449*, which can be seen in @fig-s1450, on the reverse 
 
 We note that non-coding genes with names starting with S are largely missing from predicted operons in *SubtiWiki* database. Our examples demonstrates that at least some of them should be assigned to operons.
 
+## Mapping gene names between *SubtiWiki* and NCBI {#sec-map-subtiwiki}
+
+The gene symbols (names) used by NCBI diverge from the *SubtiWiki* names to which Stanley-Wall lab are accustomed to. Therefore an attempt was made to map *SubtiWiki* genes to NCBI and replace the differing gene symbols where possible. A similar tactic to that used in @sec-annotating-ncrna was applied. Sequences for all genes were extracted from *SubtiWiki* and then mapped to the NCBI genome sequence (chromosome only). The non-unique mappings were removed -- these corresponded to ribosomal sequences. Uniquely mapped sequences were then matched by coordinates (start, end, strand) to the NCBI annotations. Summary of matching statistics are shown in @tbl-subtiwiki-matching-stats.
+
+```{r}
+#| label: tbl-subtiwiki-matching-stats
+#| tbl-cap: Results for mapping *SubtiWiki* genes to NCBI genome.
+tar_read(sw_match_stats) |> 
+  gt() |> 
+  fmt_number(
+    columns = "Percentage",
+    n_sigfig = 3
+  ) |> 
+  tab_style(
+    style = cell_borders(sides = c("bottom"),  weight = px(1.5)),
+    locations = cells_body(rows = 4)
+  )
+```
+
+Where mapping was found, the *SubtiWiki* gene symbols are used, everywhere else the original NCBI gene symbols were left.
+
+::: {style="height: 600px; width: fit-content; overflow-y: scroll; margin-left: auto; margin-right: auto; font-size: 10pt"}
+
+```{r}
+#| label: tbl-subtiwiki-non-matching
+#| tbl-cap: NCBI genes for which either *SubtiWiki* gene name was different or where no *SubtiWiki* counterparts were found.
+tar_read(genes) |>
+  dplyr::filter(chr == "NZ_CP020102.1") |> 
+  dplyr::filter(ncbi_gene_symbol != sw_gene_symbol | is.na(sw_gene_symbol)) |>
+  dplyr::mutate(across(everything(), ~replace_na(.x, "--"))) |> 
+  dplyr::arrange(ncbi_gene_symbol) |> 
+  dplyr::select(`NCBI ID` = id, `NCBI symbol` = ncbi_gene_symbol, `SubtiWiki symbol` = sw_gene_symbol, Biotype = biotype, Description = description) |> 
+  gt()
+```
+
+:::
 
 # Sequencing and mapping
 
@@ -566,29 +602,16 @@ tar_read(tbl_gse) |>
 ```{r}
 tar_load(toxan) 
 n_toxan <- nrow(toxan)
-n_on_ncbi <- toxan |> filter(ncbi) |> nrow()
-n_not_on_ncbi <- toxan |> filter(!ncbi) |> nrow()
 ```
 
-A list of `r n_toxan + 1` toxins and antibiotics was provided. At the first step, *pksK* was removed from the list, as it was found to be a synonym of *pksJ*, already on the list. Then the gene symbols on the list were matched to the NCBI annotations, where possible. `r n_on_ncbi` genes were found matching directly, by the gene symbol. The remaining `r n_not_on_ncbi` genes were matched to *SubtiWiki* annotations and then mapped to the NCBI data by coordinates, matching start and end of each gene within ±50 bp of the start and end of the NCBI coordinates, respectively. *yfjE* with a very different length in both sets of annotations was matched manually to B4U62_RS04555.
+A list of `r n_toxan + 1` toxins and antibiotics was provided. *pksK* was removed from the list, as it was found to be a synonym of *pksJ*, already on the list. The remaining genes are listed in @tbl-toxans.
 
 ```{r}
-#| label: tbl-toxan-match
-#| tbl-cap: Results of matching toxins and antibiotics to the NCBI annotations. There are two different genes annotated as *ppsA* in NCBI. Here, they are distinguished by calling them *ppsA* and *ppsA.1*. The blue shading indicates genes with different names in the NCBI database than in the provided list, for which *SubtiWiki* annotations were used and then mapped by coordinates to the NCBI genes.
+#| label: tbl-toxans
+#| tbl-cap: List of toxins and antibiotics. Gene symbols provided were matched to the *SubtiWiki* gene symbols, mapped to NCBI annotations (see @sec-map-subtiwiki).
 toxan |> 
-  mutate(ncbi_gene = tidyr::replace_na(ncbi_gene, "--")) |> 
-  select(chr, `Gene symbol` = gene_symbol, `Matching NCBI gene` = ncbi_gene, `NCBI id` = id, Start = start, End = end, ncbi) |> 
-  group_by(chr) |> 
-  gt() |> 
-  tab_style(
-    style = list(
-      cell_fill(color = "lightskyblue1")
-    ),
-    locations = cells_body(
-      rows = ncbi == FALSE
-    )
-  ) |> 
-  cols_hide(ncbi)
+  select(-ncbi_gene_symbol) |> 
+  gt()
 ```
 
 
@@ -643,6 +666,7 @@ tar_read(de_toxan_sel) |>
 
 - [Differential expression for genes](https://shiny.compbio.dundee.ac.uk/mgierlinski/private/bsub_comp/de_genes)
 - [Differential expression for operons](https://shiny.compbio.dundee.ac.uk/mgierlinski/private/bsub_comp/de_operons)
+- [DE genome browser](https://shiny.compbio.dundee.ac.uk/mgierlinski/private/bsub_comp/browser)
 
 ## Downloads
 

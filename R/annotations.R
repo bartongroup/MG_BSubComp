@@ -231,3 +231,94 @@ annotate_plasmid_genes <- function(genes, plasmid_annot) {
 
 
 
+
+
+match_sequences_to_genome <- function(genome, sequences, max_mismatch = 0, with_indels = FALSE) {
+  sequences |> 
+    dplyr::mutate(
+      hits = purrr::map2(sequence, strand, ~{
+        s <- Biostrings::DNAString(.x)
+        if(.y == "-")
+          s <- Biostrings::reverseComplement(s)
+        mp <- Biostrings::matchPattern(s, genome, max.mismatch = max_mismatch, with.indels = with_indels)
+        if(length(mp) > 0) {
+          tibble::tibble(
+            start = BiocGenerics::start(mp),
+            end = BiocGenerics::end(mp),
+            width = BiocGenerics::width(mp)
+          )
+        } else {
+          tibble::tibble(start = NA, end = NA, width = NA)
+        }
+        
+      }, .progress = TRUE)
+    ) |> 
+    tidyr::unnest(hits) |> 
+    dplyr::select(-sequence) |>
+    dplyr::arrange(start)
+}
+
+match_subtiwiki_names <- function(genes, sw_genes, genome, max_mismatch = 0, with_indels = FALSE) {
+  sequences <- sw_genes |> 
+    select(
+      id,
+      name,
+      sequence = genomic_annotations.dna_sequence,
+      strand = genomic_annotations.orientation
+    ) |> 
+    mutate(strand = if_else(strand == "Positive", "+", "-")) |> 
+    drop_na()
+
+  # All matches/non-matches
+  seq_match <- match_sequences_to_genome(genome[[1]], sequences, max_mismatch, with_indels)
+  
+  # Unique matches
+  seq_good_match <- seq_match |> 
+    drop_na() |> 
+    distinct(start, end, strand, .keep_all = TRUE) |> # Remove multiple sequences matching the same locus
+    distinct(id, .keep_all = TRUE) |> # Remove the same sequence mapping multiple loci
+    select(sw_id = id, sw_gene_symbol = name, name, start, end, strand)
+
+  # Gene table with new column
+  new_genes <- genes |> 
+    rename(ncbi_gene_symbol = gene_symbol) |> 
+    left_join(seq_good_match, by = join_by(start, end, strand)) |> 
+    mutate(gene_symbol = if_else(is.na(sw_gene_symbol), ncbi_gene_symbol, sw_gene_symbol))
+
+  list(
+    sw_genes = sequences  |> select(-c(sequence, strand)),
+    match_results = seq_match,
+    good_matches = seq_good_match,
+    genes = new_genes
+  )
+}
+
+match_subtiwiki_stats <- function(sw_match) {
+  chgenes <- sw_match$genes |>
+       filter(chr == "NZ_CP020102.1") 
+  tribble(
+    ~Genes, ~Count, ~tot_base,
+    "SubtiWiki sequences", sw_match$sw_genes |> nrow(), "sw",
+    "Sequences matches", sw_match$match_results |> drop_na() |> distinct(id) |> nrow(), "sw",
+    "Unique matches", sw_match$good_matches |> nrow(), "sw",
+    "Mapped sequence loci match NCBI coordinates", sw_match$genes |> filter(!is.na(sw_id)) |> nrow(), "sw",
+    "NCBI annotated genes", chgenes |> nrow(), "ncbi",
+    "NCBI genes that changed name", chgenes |> filter(ncbi_gene_symbol != sw_gene_symbol) |> nrow(), "ncbi",
+    "Non-ribosomal NCBI genes that gained name", chgenes |> filter(!(biotype %in% c("tRNA", "rRNA")) & is.na(ncbi_gene_symbol) & !is.na(sw_gene_symbol) & !str_detect(sw_gene_symbol, "BSU")) |> nrow(), "ncbi",
+    "Protein coding genes not matched between NCBI and SubtiWiki", chgenes |> filter(is.na(sw_id) & biotype == "protein_coding") |> nrow(), "ncbi"
+  ) |> 
+    mutate(total = case_match(
+      tot_base,
+      "sw" ~ sw_match$sw_genes |> nrow(),
+      "ncbi" ~ chgenes |> nrow()
+    )) |> 
+    mutate(Percentage = 100 * Count / total) |> 
+    select(-c(tot_base, total))
+}
+
+
+manually_curate_genes <- function(genes, curated_genes) {
+  genes |> 
+    left_join(select(curated_genes, id, curated_gene_symbol = gene_symbol), by = join_by(id)) |> 
+    mutate(gene_symbol = if_else(is.na(curated_gene_symbol), gene_symbol, curated_gene_symbol))
+}

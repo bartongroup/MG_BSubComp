@@ -1,4 +1,4 @@
-read_toxins_and_antibiotics <- function(fname, genes, sw_genes, max_diff = 50,
+read_toxins_and_antibiotics_old <- function(fname, genes, sw_genes, max_diff = 50,
                                         manual_match = c("yfjE" = "B4U62_RS04555")) {
   g <- readxl::read_excel(fname, col_names = FALSE, skip = 1) |> 
     rename(x = 1) |> 
@@ -71,6 +71,26 @@ read_toxins_and_antibiotics <- function(fname, genes, sw_genes, max_diff = 50,
     mutate(gene_symbol = make.unique(gene_symbol))
 }
 
+
+read_toxins_and_antibiotics <- function(fname, genes) {
+  g <- readxl::read_excel(fname, col_names = FALSE, skip = 1) |> 
+    rename(x = 1) |> 
+    filter(!(x %in% c("Chromosome", "Plasmid"))) |> 
+    mutate(row_id = row_number()) |> 
+    pivot_longer(-row_id) |> 
+    drop_na() |> 
+    pull(value) |> 
+    unique()
+
+  tb <- tibble(
+    gene_symbol = g
+  ) |> 
+    distinct()
+
+  # match genes
+  tb |> 
+    left_join(select(genes, id, ncbi_gene_symbol, gene_symbol, chr, start, end), by = join_by(gene_symbol))
+}
 
 
 

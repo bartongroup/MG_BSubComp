@@ -16,11 +16,14 @@ targets_main <- function() {
     # plasmid GFF was downloaded from https://ncbi.nlm.nih.gov/nucleotide/KF365913
     gff_KF365913 = rtracklayer::import(config$KF365913_file),
     genes_gtf = get_gene_annotations_from_gtf(gtf),
+    tar_target(curated_genes_file, "info/manually_curated_gene_symbols.csv", format = "file"),
+    curated_genes = readr::read_csv(curated_genes_file, show_col_types = FALSE),
     chromosomes = genes_gtf$chr |> unique() |> as.character(),
     plasmid_annot = ncbi_plasmid_annotations(genes_gtf, gff_KF365913),
-    genes = annotate_plasmid_genes(genes_gtf, plasmid_annot),
+    ncbi_genes = annotate_plasmid_genes(genes_gtf, plasmid_annot),
     sw_genes = get_subtiwiki_genes(),
-    sw_gene_match = match_genes_by_coordinates(genes, sw_genes, max_diff = 50),
+    sw_match = match_subtiwiki_names(ncbi_genes, sw_genes, genome, max_mismatch = 2, with_indels = TRUE),
+    genes = manually_curate_genes(sw_match$genes, curated_genes),
     operons = get_operons(genes),
     terms = get_functional_terms(gtf, kg_spec = "bsu"),
     fterms = prepare_terms_fenr(terms, genes$id)
@@ -98,6 +101,8 @@ targets_main <- function() {
   )
 
   for_report <- tar_plan(
+    sw_match_stats = match_subtiwiki_stats(sw_match),
+
     sense_antisense = get_sense_antisense(star, star_antisense),
     fig_sense_example = plot_sense_antisense(sense_antisense, c("S1449", "S1450", "B4U62_RS20160", "B4U62_RS20165", "B4U62_RS20155")),
 
@@ -128,17 +133,15 @@ targets_main <- function() {
   )
 
   for_manuscript <- tar_plan(
-    pdf_volcano_toxins = mn_plot_volcano_toxins(de_toxan, toxan) |> gp("volcano_toxins", 4, 4)
+    pdf_volcano_toxins = mn_plot_volcano_toxins(de, toxan) |> gp("volcano_toxins", 4, 4)
   )
 
   toxins_and_antibiotics <- tar_plan(
     tar_target(toxan_file, "info/toxins_and_antibiotics.xlsx", format = "file"),
-    toxan = read_toxins_and_antibiotics(toxan_file, genes, sw_genes, max_diff = 50),
-    de_toxan = rename_toxan_genes(de, toxan),
-    de_toxan_sel = de_toxan |> filter(id %in% toxan$id),
-    star_toxan = rename_toxan_genes_in_set(star, toxan),
-    fig_volcano_toxan = mn_plot_volcano(de_toxan, group_ids = toxan |> add_column(group = "Toxins and antibiotics")),
-    fig_heatmap_toxan = plot_fc_heatmap(star_toxan, id_sel = toxan$id, with_x_text = TRUE, with_y_text = TRUE, max_fc = NA)
+    toxan = read_toxins_and_antibiotics(toxan_file, genes),
+    de_toxan_sel = de |> filter(id %in% toxan$id),
+    fig_volcano_toxan = mn_plot_volcano(de, group_ids = toxan |> add_column(group = "Toxins and antibiotics")),
+    fig_heatmap_toxan = plot_fc_heatmap(star, id_sel = toxan$id, with_x_text = TRUE, with_y_text = TRUE, max_fc = NA)
   )
 
   shiny <- tar_plan(
