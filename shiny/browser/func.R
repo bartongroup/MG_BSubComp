@@ -23,22 +23,14 @@ make_str_range <- function(range) {
   str_glue("{range$chr}:{start}-{end}")
 }
 
-make_de_table <- function(de, fdr_limit) {
-  de |> 
-    select(id, gene_symbol, description, log_fc, fdr) |> 
-    filter(fdr < fdr_limit) |> 
-    arrange(log_fc)
-}
 
-plot_browser <- function(genes, de, range, fdr_limit = 0.01) {
-  g <- genes |> 
+plot_browser <- function(dat, range, fdr_limit = 0.01) {
+  g <- dat |> 
     filter(chr == range$chr & end > range$start & start < range$end) |> 
-    inner_join(select(de, -gene_symbol), by = join_by(id)) |> 
     mutate(
       sig = fdr < fdr_limit,
       sig = factor(sig, levels = c(FALSE, TRUE))
-    ) |> 
-    mutate(gene_symbol = if_else(is.na(gene_symbol), id, gene_symbol))
+    )
   mx <- max(abs(g$log_fc)) * 1.3
   dm <- tibble(
     dx = c(range$start, range$end),
