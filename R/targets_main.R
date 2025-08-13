@@ -147,7 +147,7 @@ targets_main <- function() {
   shiny <- tar_plan(
     sav_shiny_genes = save_data_for_shiny(star, de, fterms, gse, shiny_dir = "shiny/de_genes"),
     sav_shiny_operons = save_data_for_shiny(star_ops, de_ops, fterms_ops, gse_ops, shiny_dir = "shiny/de_operons"),
-    sav_shiny_browser =  save_data_for_shiny_browser(de, genes, shiny_dir = "shiny/browser")
+    sav_shiny_browser =  save_data_for_shiny_browser(de, genes, operons, shiny_dir = "shiny/browser")
   )
 
   get_environment <- tar_plan(

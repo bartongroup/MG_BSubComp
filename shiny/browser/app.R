@@ -6,25 +6,61 @@ library(tibble)
 library(stringr)
 library(purrr)
 library(ggplot2)
+library(scales)
 library(DT)
 
 source("func.R")
 
 # Prepare UI elements
 
-fdr_limit_input <- numericInput(
-  inputId = "fdr_limit",
-  label = "FDR limit",
-  value = 0.01,
-  min = 0,
-  max = 1
-)
+style_small <- tags$style("
+  .small {
+    padding: 8px 8px 9px !important; 
+    font-size: 10px; !important;
+    height: 28px !important;
+    line-height: 1.0 !important;
+  }
+")
 
+# Wheel → Shiny input (written by ChatGPT 5.0)
+script_wheel <- tags$script("
+  document.addEventListener('DOMContentLoaded', function() {
+    const el = document.getElementById('browser_plot');        // plotOutput id
+    if (!el) return;
+    el.addEventListener('wheel', function(e){
+      e.preventDefault();                            // don't scroll the page
+      const rect = el.getBoundingClientRect();
+      const fracX = (e.clientX - rect.left) / rect.width;  // 0..1 across the plot
+      Shiny.setInputValue('p_wheel', {
+        deltaY: e.deltaY,                            // >0 = down, <0 = up
+        fracX: Math.min(Math.max(fracX, 0), 1),      // clamp
+        ctrl:  e.ctrlKey,
+        shift: e.shiftKey,
+        time:  Date.now()
+      }, {priority:'event'});
+    }, {passive:false});
+  });
+")
+
+# Differential expression gene table card
 card_de <- card(
   card_header(
     "DE results",
-    span(fdr_limit_input),
-    class = "d-flex justify-content-between"
+    class = "d-flex justify-content-between",
+    div(
+      class = "d-flex align-items-center",
+      tags$label("FDR limit", `for` = "fdr_limit", class = "me-2"),
+      div(
+        style = "width: 100px;",
+        numericInput(
+          inputId = "fdr_limit",
+          label = NULL,
+          value = 0.01,
+          min = 0,
+          max = 1
+        )
+      )
+    )
   ),
   card_body(
     min_height = 600,
@@ -34,68 +70,44 @@ card_de <- card(
   )
 )
 
-range_str <- textInput("range_str", "Range", value = "")
-ab_left <- actionButton("left", icon("arrow-left"), class = "small")
-ab_in <- actionButton("zoomin", icon("plus"), class = "small")
-ab_out <- actionButton("zoomout", icon("minus"), class = "small")
-ab_right <- actionButton("right", icon("arrow-right"), class = "small")
-
+# Genomic browser card
 card_browser <- card(
   card_header(
     "Browser",
-    shiny::span(range_str, ab_left, ab_in, ab_out, ab_right),
-    class = "d-flex justify-content-between"
+    class = "d-flex justify-content-between",
+    div(
+      class = "d-flex align-items-center",
+      tags$label("Range", `for` = "range_str", class = "me-2"),
+      textInput("range_str", NULL, value = "")
+    )
   ),
   card_body(
     min_height = 500,
     max_height = 500,
-    shiny::plotOutput(
+    plotOutput(
       outputId = "browser_plot",
       width = "100%",
       height = "500px",
       dblclick = "dblclick",
       brush = "brush"
-    )
+    ),
+    uiOutput("nav_buttons")
   )
 )
+
 
 
 ### UI
 
 ui <- page_fillable(
-  theme = bs_theme(bootswatch = "spacelab", spacer = "0.8rem") |>
-          bs_add_rules(".info-pop { max-width: 500px; background-color: #f0f9e8; }"),
+  theme = bs_theme(
+    bootswatch = "spacelab",
+    spacer = "0.8rem"
+  ) |>
+    bs_add_rules(".info-pop { max-width: 500px; background-color: #f0f9e8; }"),
   title = "DE BROWSER",
-
-  tags$style(HTML("
-    .small {
-      padding: 8px 8px 9px !important; 
-      font-size: 10px; !important;
-      height: 28px !important;
-      line-height: 1.0 !important;
-    }
-  ")),
-
-  # Wheel → Shiny input
-  tags$script(HTML("
-    document.addEventListener('DOMContentLoaded', function() {
-      const el = document.getElementById('browser_plot');        // plotOutput id
-      if (!el) return;
-      el.addEventListener('wheel', function(e){
-        e.preventDefault();                            // don't scroll the page
-        const rect = el.getBoundingClientRect();
-        const fracX = (e.clientX - rect.left) / rect.width;  // 0..1 across the plot
-        Shiny.setInputValue('p_wheel', {
-          deltaY: e.deltaY,                            // >0 = down, <0 = up
-          fracX: Math.min(Math.max(fracX, 0), 1),      // clamp
-          ctrl:  e.ctrlKey,
-          shift: e.shiftKey,
-          time:  Date.now()
-        }, {priority:'event'});
-      }, {passive:false});
-    });
-  ")),
-
+  style_small,
+  script_wheel,
   layout_columns(
     col_widths = c(5, 7),
     style = "height: 100%;", 
@@ -116,19 +128,23 @@ server <- function(input, output, session) {
     qs_read("data/genes.qs")
   })
 
+  operons <- reactive({
+    qs_read("data/operons.qs")
+  })
+
   de <- reactive({
     qs_read("data/de.qs")
   })
 
   gene_data <- reactive({
     de() |> 
-      select(-gene_symbol) |> 
       left_join(genes(), by = join_by(id)) |> 
       mutate(gene_symbol = if_else(is.na(gene_symbol), id, gene_symbol))
   })
 
   chrlens <- reactive({
     gns <- genes()
+    req(gns)
     chroms <- unique(gns$chr)
     map(chroms, function(chrom) {
       gns |> 
@@ -173,28 +189,43 @@ server <- function(input, output, session) {
       r <- genes() |> 
         filter(id == ids)
       range <- list(chr = r$chr, start = r$start, end = r$end) |> 
-        expand_range(chrlens(), margin = 0.5)
+        expand_range(chrlens(), margin = 0.8)
       sr <- make_str_range(range)
     }
     updateTextInput(session, "range_str", value = sr)
   })
 
+  plot_ready <- reactive({
+    nzchar(input$range_str)
+  })
+
   output$browser_plot <- renderPlot({
-    srange <- input$range_str
+    req(plot_ready())
     dat <- gene_data()
-    req(srange, dat)
-    if(srange != "") {
-      range <- parse_str_range(srange)
-      plot_browser(dat, range, fdr_limit = 0.01)
-    }
+    ops <- operons()
+    req(dat, ops)
+    srange <- input$range_str
+    range <- parse_str_range(srange)
+    plot_browser(dat, ops, range, fdr_limit = input$fdr_limit)
+  })
+
+  output$nav_buttons <- renderUI({
+    req(plot_ready())
+    div(
+      class = "d-flex justify-content-center mt-2",
+      actionButton("left",  icon("arrow-left"), class = "small"),
+      actionButton("zoomin", icon("plus"),       class = "small"),
+      actionButton("zoomout",icon("minus"),      class = "small"),
+      actionButton("right", icon("arrow-right"), class = "small")
+    )
   })
     
   observeEvent(input$dblclick, {
-    centre <- input$dblclick$x
     range <- parse_str_range(input$range_str)
-    delta <- centre - 0.5 * (range$start + range$end)
-    range$start <- range$start + delta
-    range$end <- range$end + delta
+    chlen <- chrlens()[[range$chr]]
+    delta <- input$dblclick$x - 0.5 * (range$start + range$end)
+    range$start <- max(range$start + delta, 0)
+    range$end <- min(range$end + delta, chlen)
     sr <- make_str_range(range)
     updateTextInput(session, "range_str", value = sr)
   })
@@ -209,7 +240,7 @@ server <- function(input, output, session) {
     session$resetBrush("brush")
   })
 
-  observeEvent(input$left, {
+  observeEvent(input$left, ignoreInit = TRUE, {
     range <- parse_str_range(input$range_str)
     width <- range$end - range$start
     range$start <- max(range$start - 0.2 * width, 0)
@@ -218,7 +249,7 @@ server <- function(input, output, session) {
     updateTextInput(session, "range_str", value = sr)
   })
 
-  observeEvent(input$right, {
+  observeEvent(input$right, ignoreInit = TRUE, {
     range <- parse_str_range(input$range_str)
     width <- range$end - range$start
     chlen <- chrlens()[[range$chr]]
@@ -228,7 +259,7 @@ server <- function(input, output, session) {
     updateTextInput(session, "range_str", value = sr)
   })
 
-  observeEvent(input$zoomin, {
+  observeEvent(input$zoomin, ignoreInit = TRUE, {
     range <- parse_str_range(input$range_str)
     width <- range$end - range$start
     if(width > 10) {
@@ -239,7 +270,7 @@ server <- function(input, output, session) {
     }
   })
   
-  observeEvent(input$zoomout, {
+  observeEvent(input$zoomout, ignoreInit = TRUE, {
     range <- parse_str_range(input$range_str)
     width <- range$end - range$start
     chlen <- chrlens()[[range$chr]]
@@ -249,7 +280,6 @@ server <- function(input, output, session) {
     updateTextInput(session, "range_str", value = sr)
   })
 
-
   observeEvent(input$p_wheel, ignoreInit = TRUE, {
     w <- input$p_wheel
     range <- parse_str_range(input$range_str)
@@ -258,23 +288,24 @@ server <- function(input, output, session) {
     if (width <= 0) return()
 
     # zoom step (tweak to taste)
-    base <- if (isTRUE(w$shift)) 1.35 else if (isTRUE(w$ctrl)) 1.08 else 1.20
-    factor <- if (w$deltaY > 0) base else 1/base   # down=zoom out, up=zoom in
+    base <- 1.2
+    factor <- ifelse(w$deltaY > 0, base, 1/base)   # down=zoom out, up=zoom in
 
     min_width <- 10L
     new_width <- max(round(width * factor), min_width)
 
+    # Recentre only at zoom in
+    # frac <- ifelse(w$deltaY > 0, 0.5, w$fracX)
+    frac <- 0.5
+
     # center at mouse position within the current window
-    center <- range$start + as.integer(round(w$fracX * width))
+    center <- range$start + as.integer(round(frac * width))
     range$start <- max(center - new_width %/% 2, 0)
     range$end <- min(range$start + new_width, chlen)
     sr <- make_str_range(range)
 
     updateTextInput(session, "range_str", value = sr)
-    
   })
-
-
 
 }
 

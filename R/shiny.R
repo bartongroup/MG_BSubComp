@@ -39,12 +39,16 @@ save_data_for_shiny <- function(set, de, fterms, gse, what = "count_norm", shiny
   write_shiny_file(gse, shiny_dir = shiny_dir)
 }
 
-save_data_for_shiny_browser <- function(de, genes, shiny_dir = "shiny") {
-  de <- de |>
-    select(id, gene_symbol, log_fc = logFC, fdr = FDR)
+save_data_for_shiny_browser <- function(de, genes, operons, shiny_dir = "shiny") {
   genes <- genes |> 
-    select(id, gene_symbol, description, chr, start, end, strand)
+    select(id, gene_symbol, description, chr, start, end, strand) |> 
+    mutate(chr = if_else(chr == "NZ_CP020102.1", "chromosome", "plasmid"))
+  operons <- operons |> 
+    select(id, operon)
+  de <- de |>
+    select(id, log_fc = logFC, fdr = FDR)
 
   write_shiny_file(de, shiny_dir = shiny_dir)
   write_shiny_file(genes, shiny_dir = shiny_dir)
+  write_shiny_file(operons, shiny_dir = shiny_dir)
 }
