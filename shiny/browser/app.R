@@ -2,6 +2,7 @@ library(shiny)
 library(bslib)
 library(qs2)
 library(dplyr)
+library(tidyr)
 library(tibble)
 library(stringr)
 library(purrr)
@@ -289,19 +290,20 @@ server <- function(input, output, session) {
 
     # zoom step (tweak to taste)
     base <- 1.2
-    factor <- ifelse(w$deltaY > 0, base, 1/base)   # down=zoom out, up=zoom in
+    factor <- ifelse(w$deltaY > 0, 1 / base, base)   # down=zoom out, up=zoom in
 
-    min_width <- 10L
-    new_width <- max(round(width * factor), min_width)
+    frac <- w$fracX
 
-    # Recentre only at zoom in
-    # frac <- ifelse(w$deltaY > 0, 0.5, w$fracX)
-    frac <- 0.5
+    # fracX is the fraction in a window that includes ticks and labels on the left;
+    # needs correcting
+    wm <- 1.06
+    frac <- 1 - (1 - frac) * wm
 
-    # center at mouse position within the current window
-    center <- range$start + as.integer(round(frac * width))
-    range$start <- max(center - new_width %/% 2, 0)
-    range$end <- min(range$start + new_width, chlen)
+    # Zoom in/out around the mouse position
+    zoom_point <- range$start + frac * width
+    range$start <- max(zoom_point - (zoom_point - range$start) / factor, 0)
+    range$end <- min(zoom_point + (range$end - zoom_point) / factor, chlen)
+
     sr <- make_str_range(range)
 
     updateTextInput(session, "range_str", value = sr)
