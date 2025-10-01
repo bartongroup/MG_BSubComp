@@ -19,7 +19,6 @@ configfile: 'config/config.yaml'
 
 genome_url =  config['genome_url']
 gtf_url =  config['gtf_url']
-subtiwiki_file = config['subtiwiki_file']
 
 # Local
 
@@ -213,11 +212,10 @@ rule load_gtf:
 
 rule make_ncrna_gtf:
     input:
-        genome = genome_file,
-        subtiwiki = subtiwiki_file
+        genome = genome_file
     output: ncrna_gtf_file
     shell:
-        'Rscript ./subtiwiki/make_ncrna_gtf.R {input.genome} {input.subtiwiki} {output}'
+        'Rscript ./subtiwiki/make_ncrna_gtf.R {input.genome} {output}'
 
 rule merge_gtf:
     input:

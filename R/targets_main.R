@@ -133,7 +133,13 @@ targets_main <- function() {
   )
 
   for_manuscript <- tar_plan(
-    pdf_volcano_toxins = mn_plot_volcano_toxins(de, toxan) |> gp("volcano_toxins", 4, 4)
+    pdf_volcano_toxins = mn_plot_volcano_toxins(de, toxan) |> gp("volcano_toxins", 4, 4),
+
+    ywq_range = list(start = 3724100, end = 3728900, chr = "NZ_CP020102.1"),
+    pdf_browser_ywq = mn_plot_browser(de, genes, operons, range = ywq_range) |> gp("browser_ywq", 6, 3),
+
+    pdf_gse_nes = mn_plot_gse_nes(gse) |> gp("gse_nes", 6, 3.2),
+    pdf_gse_heatmap = mn_plot_gse_heatmap(gse, de, genes) |> gp("gse_heatmap", 2.5, 8)
   )
 
   toxins_and_antibiotics <- tar_plan(
