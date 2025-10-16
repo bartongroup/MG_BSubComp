@@ -252,6 +252,17 @@ tar_read(fig_ribo_prop)
 tar_read(fig_fscreen) 
 ```
 
+
+```{r}
+#| label: tbl-fscreen
+#| tbl-cap: FastQ screen one hit per genome counts. FastQ screen samples 100,000 random reads from each FASTQ file to do the mapping.
+tar_read(fscrn) |>
+  filter( name == "#One_hit_one_genome") |>
+  pivot_wider(id_cols = Genome, names_from = sample, values_from = value) |>
+  arrange(desc(ctrl_1)) |> 
+  gt_table()
+```
+
 ## Read quality
 
 @fig-read-qual shows read quality as a function of base pair position, @fig-read-qual-clust shows hierarchical clustering based on read quality. This has nothing to do with biology, but rather shows potential batch effects related to sequencing or sample quality. We see that the sample `ctrl_5` stands out a bit.
