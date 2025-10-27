@@ -968,3 +968,11 @@ parse_strandedness <- function(config, meta) {
     list_rbind() |> 
     mutate(sample = as.character(s2n[raw_sample]))
 }
+
+save_star_counts <- function(star, fname) {
+  star$tab |> 
+    as_tibble(rownames = "id") |> 
+    left_join(star$genes |> select(id, gene_symbol), by = join_by(id)) |> 
+    relocate(gene_symbol, .after = 1) |> 
+    write_csv(fname)
+}

@@ -129,7 +129,9 @@ targets_main <- function() {
     sav_gse = write_table(gsea),
     sav_gse_ops = write_table(gsea_ops),
 
-    cmp_ncbi_sw = compare_ncbi_sw_genes(genes, sw_genes, limit_line = 50)
+    cmp_ncbi_sw = compare_ncbi_sw_genes(genes, sw_genes, limit_line = 50),
+
+    sav_star_counts = save_star_counts(star, "tab/counts.csv")
   )
 
   for_manuscript <- tar_plan(
